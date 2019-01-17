@@ -1333,7 +1333,7 @@ process_module(int midx)
 				modules[midx].bm_type = BMT_ENV;
 			} else if (strcmp(q, "file") != 0) {
 				dboot_printf("\tmodule #%d: unknown module "
-				    "type '%s'; defaulting to 'file'",
+				    "type '%s'; defaulting to 'file'\n",
 				    midx, q);
 			}
 			continue;
@@ -2079,6 +2079,9 @@ build_page_tables(void)
 		end = start + fb->framebuffer_common.framebuffer_height *
 		    fb->framebuffer_common.framebuffer_pitch;
 
+		if (map_debug)
+			dboot_printf("FB 1:1 map pa=%" PRIx64 "..%" PRIx64 "\n",
+			    start, end);
 		pte_bits |= PT_NOCACHE;
 		while (start < end) {
 			map_pa_at_va(start, start, 0);
