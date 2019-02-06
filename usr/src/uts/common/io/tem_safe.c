@@ -210,10 +210,11 @@ tem_safe_check_first_time(
 		return;
 
 	first_time = 0;
-	if (tems.ts_display_mode == VIS_TEXT) {
+	if (tems.ts_display_mode == VIS_TEXT)
 		tem_safe_text_cursor(tem, VIS_GET_CURSOR, credp, called_from);
-		tem_safe_align_cursor(tem);
-	}
+	else
+		tem_safe_pix_cursor(tem, VIS_GET_CURSOR, credp, called_from);
+	tem_safe_align_cursor(tem);
 }
 
 /*
@@ -579,14 +580,14 @@ tem_safe_selgraph(struct tem_vt_state *tem)
 			}
 			break;
 
-		case 30: /* black	(grey) 		foreground */
-		case 31: /* red		(light red) 	foreground */
-		case 32: /* green	(light green) 	foreground */
-		case 33: /* brown	(yellow) 	foreground */
-		case 34: /* blue	(light blue) 	foreground */
-		case 35: /* magenta	(light magenta) foreground */
-		case 36: /* cyan	(light cyan) 	foreground */
-		case 37: /* white	(bright white) 	foreground */
+		case 30: /* black	(grey)		foreground */
+		case 31: /* red		(light red)	foreground */
+		case 32: /* green	(light green)	foreground */
+		case 33: /* brown	(yellow)	foreground */
+		case 34: /* blue	(light blue)	foreground */
+		case 35: /* magenta	(light magenta)	foreground */
+		case 36: /* cyan	(light cyan)	foreground */
+		case 37: /* white	(bright white)	foreground */
 			tem->tvs_fg_color = param - 30;
 			tem->tvs_flags &= ~TEM_ATTR_BRIGHT_FG;
 			break;
@@ -602,14 +603,14 @@ tem_safe_selgraph(struct tem_vt_state *tem)
 				tem->tvs_flags &= ~TEM_ATTR_BRIGHT_FG;
 			break;
 
-		case 40: /* black	(grey) 		background */
-		case 41: /* red		(light red) 	background */
-		case 42: /* green	(light green) 	background */
-		case 43: /* brown	(yellow) 	background */
-		case 44: /* blue	(light blue) 	background */
-		case 45: /* magenta	(light magenta) background */
-		case 46: /* cyan	(light cyan) 	background */
-		case 47: /* white	(bright white) 	background */
+		case 40: /* black	(grey)		background */
+		case 41: /* red		(light red)	background */
+		case 42: /* green	(light green)	background */
+		case 43: /* brown	(yellow)	background */
+		case 44: /* blue	(light blue)	background */
+		case 45: /* magenta	(light magenta)	background */
+		case 46: /* cyan	(light cyan)	background */
+		case 47: /* white	(bright white)	background */
 			tem->tvs_bg_color = param - 40;
 			tem->tvs_flags &= ~TEM_ATTR_BRIGHT_BG;
 			break;
@@ -1170,7 +1171,7 @@ tem_safe_parse(struct tem_vt_state *tem, uchar_t ch,
 			    tem->tvs_r_cursor.col, credp, called_from);
 			tem->tvs_state = A_STATE_START;
 			return;
-		case 'p': 	/* sunbow */
+		case 'p':	/* sunbow */
 			tem_safe_send_data(tem, credp, called_from);
 			/*
 			 * Don't set anything if we are
@@ -1191,7 +1192,7 @@ tem_safe_parse(struct tem_vt_state *tem, uchar_t ch,
 			tem_safe_cls(tem, credp, called_from);
 			tem->tvs_state = A_STATE_START;
 			return;
-		case 'q':  	/* sunwob */
+		case 'q':	/* sunwob */
 			tem_safe_send_data(tem, credp, called_from);
 			/*
 			 * Don't set anything if we are
@@ -1692,8 +1693,8 @@ tem_safe_pix_clear_entire_screen(struct tem_vt_state *tem, cred_t *credp,
 	nrows = (tems.ts_p_dimension.height + (height - 1))/ height;
 	ncols = (tems.ts_p_dimension.width + (width - 1))/ width;
 
-	tem_safe_pix_cls_range(tem, 0, nrows, 0, 0, ncols, 0,
-	    B_FALSE, credp, called_from);
+	tem_safe_pix_cls_range(tem, 0, nrows, tems.ts_p_offset.y, 0, ncols,
+	    tems.ts_p_offset.x, B_FALSE, credp, called_from);
 
 	/*
 	 * Since the whole screen is cleared, we don't need
@@ -2052,6 +2053,13 @@ tem_safe_pix_cursor(struct tem_vt_state *tem, short action,
 	ca.action = action;
 
 	tems_safe_cursor(&ca, credp, called_from);
+
+	if (action == VIS_GET_CURSOR) {
+		tem->tvs_c_cursor.row = (ca.row - tems.ts_p_offset.y) /
+		    tems.ts_font.height;
+		tem->tvs_c_cursor.col = (ca.col - tems.ts_p_offset.x) /
+		    tems.ts_font.width;
+	}
 }
 
 static void
