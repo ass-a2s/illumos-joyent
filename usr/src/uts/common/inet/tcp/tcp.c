@@ -23,7 +23,7 @@
  * Copyright (c) 1991, 2010, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2017 Joyent, Inc.
  * Copyright (c) 2011 Nexenta Systems, Inc. All rights reserved.
- * Copyright (c) 2013,2014 by Delphix. All rights reserved.
+ * Copyright (c) 2013, 2016 by Delphix. All rights reserved.
  * Copyright 2014, OmniTI Computer Consulting, Inc. All rights reserved.
  */
 /* Copyright (c) 1990 Mentat Inc. */
@@ -266,8 +266,6 @@ typedef struct tcpt_s {
 /*
  * Functions called directly via squeue having a prototype of edesc_t.
  */
-void		tcp_input_listener(void *arg, mblk_t *mp, void *arg2,
-    ip_recv_attr_t *ira);
 void		tcp_input_data(void *arg, mblk_t *mp, void *arg2,
     ip_recv_attr_t *ira);
 static void	tcp_linger_interrupted(void *arg, mblk_t *mp, void *arg2,
@@ -640,15 +638,9 @@ tcp_set_destination(tcp_t *tcp)
 	tcp->tcp_localnet = uinfo.iulp_localnet;
 
 	if (uinfo.iulp_rtt != 0) {
-		clock_t	rto;
-
-		tcp->tcp_rtt_sa = uinfo.iulp_rtt;
-		tcp->tcp_rtt_sd = uinfo.iulp_rtt_sd;
-		rto = (tcp->tcp_rtt_sa >> 3) + tcp->tcp_rtt_sd +
-		    tcps->tcps_rexmit_interval_extra +
-		    (tcp->tcp_rtt_sa >> 5);
-
-		TCP_SET_RTO(tcp, rto);
+		tcp->tcp_rtt_sa = MSEC2NSEC(uinfo.iulp_rtt);
+		tcp->tcp_rtt_sd = MSEC2NSEC(uinfo.iulp_rtt_sd);
+		tcp->tcp_rto = tcp_calculate_rto(tcp, tcps, 0);
 	}
 	if (uinfo.iulp_ssthresh != 0)
 		tcp->tcp_cwnd_ssthresh = uinfo.iulp_ssthresh;
@@ -1237,11 +1229,6 @@ tcp_closei_local(tcp_t *tcp)
 
 	if (!TCP_IS_SOCKET(tcp))
 		tcp_acceptor_hash_remove(tcp);
-
-	TCPS_UPDATE_MIB(tcps, tcpHCInSegs, tcp->tcp_ibsegs);
-	tcp->tcp_ibsegs = 0;
-	TCPS_UPDATE_MIB(tcps, tcpHCOutSegs, tcp->tcp_obsegs);
-	tcp->tcp_obsegs = 0;
 
 	/*
 	 * This can be called via tcp_time_wait_processing() if TCP gets a
@@ -1926,15 +1913,6 @@ tcp_reinit(tcp_t *tcp)
 	/* Cancel outstanding timers */
 	tcp_timers_stop(tcp);
 
-	/*
-	 * Reset everything in the state vector, after updating global
-	 * MIB data from instance counters.
-	 */
-	TCPS_UPDATE_MIB(tcps, tcpHCInSegs, tcp->tcp_ibsegs);
-	tcp->tcp_ibsegs = 0;
-	TCPS_UPDATE_MIB(tcps, tcpHCOutSegs, tcp->tcp_obsegs);
-	tcp->tcp_obsegs = 0;
-
 	tcp_close_mpp(&tcp->tcp_xmit_head);
 	if (tcp->tcp_snd_zcopy_aware)
 		tcp_zcopy_notify(tcp);
@@ -2106,9 +2084,6 @@ tcp_reinit_values(tcp_t *tcp)
 	tcp->tcp_swnd = 0;
 	DONTCARE(tcp->tcp_cwnd);	/* Init in tcp_process_options */
 
-	ASSERT(tcp->tcp_ibsegs == 0);
-	ASSERT(tcp->tcp_obsegs == 0);
-
 	if (connp->conn_ht_iphc != NULL) {
 		kmem_free(connp->conn_ht_iphc, connp->conn_ht_iphc_allocated);
 		connp->conn_ht_iphc = NULL;
@@ -2200,6 +2175,8 @@ tcp_reinit_values(tcp_t *tcp)
 	DONTCARE(tcp->tcp_rtt_sa);		/* Init in tcp_init_values */
 	DONTCARE(tcp->tcp_rtt_sd);		/* Init in tcp_init_values */
 	tcp->tcp_rtt_update = 0;
+	tcp->tcp_rtt_sum = 0;
+	tcp->tcp_rtt_cnt = 0;
 
 	DONTCARE(tcp->tcp_swl1); /* Init in case TCPS_LISTEN/TCPS_SYN_SENT */
 	DONTCARE(tcp->tcp_swl2); /* Init in case TCPS_LISTEN/TCPS_SYN_SENT */
@@ -2348,7 +2325,6 @@ tcp_init_values(tcp_t *tcp, tcp_t *parent)
 {
 	tcp_stack_t	*tcps = tcp->tcp_tcps;
 	conn_t		*connp = tcp->tcp_connp;
-	clock_t		rto;
 
 	ASSERT((connp->conn_family == AF_INET &&
 	    connp->conn_ipversion == IPV4_VERSION) ||
@@ -2417,12 +2393,10 @@ tcp_init_values(tcp_t *tcp, tcp_t *parent)
 	 * during first few transmissions of a connection as seen in slow
 	 * links.
 	 */
-	tcp->tcp_rtt_sa = tcp->tcp_rto_initial << 2;
-	tcp->tcp_rtt_sd = tcp->tcp_rto_initial >> 1;
-	rto = (tcp->tcp_rtt_sa >> 3) + tcp->tcp_rtt_sd +
-	    tcps->tcps_rexmit_interval_extra + (tcp->tcp_rtt_sa >> 5) +
-	    tcps->tcps_conn_grace_period;
-	TCP_SET_RTO(tcp, rto);
+	tcp->tcp_rtt_sa = MSEC2NSEC(tcp->tcp_rto_initial) << 2;
+	tcp->tcp_rtt_sd = MSEC2NSEC(tcp->tcp_rto_initial) >> 1;
+	tcp->tcp_rto = tcp_calculate_rto(tcp, tcps,
+	    tcps->tcps_conn_grace_period);
 
 	tcp->tcp_timer_backoff = 0;
 	tcp->tcp_ms_we_have_waited = 0;

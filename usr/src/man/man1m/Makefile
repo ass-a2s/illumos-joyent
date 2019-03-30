@@ -76,6 +76,7 @@ _MANFILES=	6to4relay.1m		\
 		clear_locks.1m		\
 		clinfo.1m		\
 		clri.1m			\
+		connstat.1m		\
 		consadm.1m		\
 		conv_lp.1m		\
 		conv_lpd.1m		\
@@ -538,7 +539,8 @@ _MANFILES=	6to4relay.1m		\
 		zoneadmd.1m		\
 		zonecfg.1m		\
 		zpool.1m		\
-		zstreamdump.1m
+		zstreamdump.1m		\
+		ztest.1m
 
 i386_MANFILES=				\
 		acpidump.1m		\
