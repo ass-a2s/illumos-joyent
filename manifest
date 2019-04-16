@@ -9875,7 +9875,9 @@ f usr/lib/mdb/proc/svc.configd.so 0555 root sys
 f usr/lib/mdb/proc/svc.startd.so 0555 root sys
 d usr/lib/mdb/raw 0755 root sys
 d usr/lib/mdb/raw/amd64 0755 root sys
+f usr/lib/mdb/raw/amd64/disk_label.so 0555 root sys
 f usr/lib/mdb/raw/amd64/dof.so 0555 root sys
+f usr/lib/mdb/raw/disk_label.so 0555 root sys
 f usr/lib/mdb/raw/dof.so 0555 root sys
 f usr/lib/more.help 0644 root bin
 f usr/lib/mpss.so.1 0755 root bin
@@ -11316,6 +11318,7 @@ h usr/share/lib/zoneinfo/Asia/Phnom_Penh=usr/share/lib/zoneinfo/Asia/Bangkok
 f usr/share/lib/zoneinfo/Asia/Pontianak 0644 root bin
 f usr/share/lib/zoneinfo/Asia/Pyongyang 0644 root bin
 f usr/share/lib/zoneinfo/Asia/Qatar 0644 root bin
+f usr/share/lib/zoneinfo/Asia/Qostanay 0644 root bin
 f usr/share/lib/zoneinfo/Asia/Qyzylorda 0644 root bin
 h usr/share/lib/zoneinfo/Asia/Rangoon=usr/share/lib/zoneinfo/Asia/Yangon
 f usr/share/lib/zoneinfo/Asia/Riyadh 0644 root bin
@@ -11440,8 +11443,8 @@ f usr/share/lib/zoneinfo/Etc/GMT-9 0644 root bin
 h usr/share/lib/zoneinfo/Etc/GMT0=usr/share/lib/zoneinfo/GMT
 h usr/share/lib/zoneinfo/Etc/GMT=usr/share/lib/zoneinfo/GMT
 h usr/share/lib/zoneinfo/Etc/Greenwich=usr/share/lib/zoneinfo/GMT
-f usr/share/lib/zoneinfo/Etc/UCT 0644 root bin
-h usr/share/lib/zoneinfo/Etc/UTC=usr/share/lib/zoneinfo/UTC
+f usr/share/lib/zoneinfo/Etc/UTC 0644 root bin
+h usr/share/lib/zoneinfo/Etc/UCT=usr/share/lib/zoneinfo/Etc/UTC
 h usr/share/lib/zoneinfo/Etc/Universal=usr/share/lib/zoneinfo/UTC
 h usr/share/lib/zoneinfo/Etc/Zulu=usr/share/lib/zoneinfo/UTC
 d usr/share/lib/zoneinfo/Europe 0755 root bin
@@ -11599,7 +11602,7 @@ h usr/share/lib/zoneinfo/ROC=usr/share/lib/zoneinfo/Asia/Taipei
 f usr/share/lib/zoneinfo/ROK 0644 root bin
 f usr/share/lib/zoneinfo/Singapore 0644 root bin
 f usr/share/lib/zoneinfo/Turkey 0644 root bin
-f usr/share/lib/zoneinfo/UCT 0644 root bin
+h usr/share/lib/zoneinfo/UCT=usr/share/lib/zoneinfo/Etc/UTC
 d usr/share/lib/zoneinfo/US 0755 root bin
 f usr/share/lib/zoneinfo/US/Alaska 0644 root bin
 f usr/share/lib/zoneinfo/US/Aleutian 0644 root bin

@@ -21,6 +21,7 @@
 /*
  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
+ * Copyright (c) 2017, Intel Corporation.
  */
 
 #ifndef _SYS_VDEV_IMPL_H
@@ -147,6 +148,14 @@ struct vdev_queue {
 	kmutex_t	vq_lock;
 };
 
+typedef enum vdev_alloc_bias {
+	VDEV_BIAS_NONE,
+	VDEV_BIAS_LOG,		/* dedicated to ZIL data (SLOG) */
+	VDEV_BIAS_SPECIAL,	/* dedicated to ddt, metadata, and small blks */
+	VDEV_BIAS_DEDUP		/* dedicated to dedup metadata */
+} vdev_alloc_bias_t;
+
+
 /*
  * On-disk indirect vdev state.
  *
@@ -240,10 +249,11 @@ struct vdev {
 	boolean_t	vdev_ishole;	/* is a hole in the namespace	*/
 	kmutex_t	vdev_queue_lock; /* protects vdev_queue_depth	*/
 	uint64_t	vdev_top_zap;
+	vdev_alloc_bias_t vdev_alloc_bias; /* metaslab allocation bias	*/
 
 	/* pool checkpoint related */
 	space_map_t	*vdev_checkpoint_sm;	/* contains reserved blocks */
-	
+
 	boolean_t	vdev_initialize_exit_wanted;
 	vdev_initializing_state_t	vdev_initialize_state;
 	kthread_t	*vdev_initialize_thread;
@@ -344,6 +354,9 @@ struct vdev {
 	zio_t		*vdev_probe_zio; /* root of current probe	*/
 	vdev_aux_t	vdev_label_aux;	/* on-disk aux state		*/
 	uint64_t	vdev_leaf_zap;
+	hrtime_t	vdev_mmp_pending; /* 0 if write finished	*/
+	uint64_t	vdev_mmp_kstat_id;	/* to find kstat entry */
+	list_node_t	vdev_leaf_node;		/* leaf vdev list */
 
 	/*
 	 * For DTrace to work in userland (libzpool) context, these fields must
@@ -364,6 +377,12 @@ struct vdev {
 #define	VDEV_SKIP_SIZE		VDEV_PAD_SIZE * 2
 #define	VDEV_PHYS_SIZE		(112 << 10)
 #define	VDEV_UBERBLOCK_RING	(128 << 10)
+
+/*
+ * MMP blocks occupy the last MMP_BLOCKS_PER_LABEL slots in the uberblock
+ * ring when MMP is enabled.
+ */
+#define	MMP_BLOCKS_PER_LABEL	1
 
 /* The largest uberblock we support is 8k. */
 #define	MAX_UBERBLOCK_SHIFT (13)

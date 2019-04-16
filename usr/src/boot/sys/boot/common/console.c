@@ -23,7 +23,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
+/*
+ * Copyright (c) 2019, Joyent, Inc.
+ */
 #include <sys/cdefs.h>
 
 #include <stand.h>
@@ -281,15 +283,6 @@ cons_change(const char *string)
 				active++;
 				continue;
 			}
-
-			if (active != 0) {
-				/*
-				 * If no consoles have initialised we wouldn't
-				 * see this.
-				 */
-				printf("console %s failed to initialize\n",
-				    consoles[cons]->c_name);
-			}
 		}
 	}
 
@@ -306,10 +299,10 @@ cons_change(const char *string)
 			    (C_ACTIVEIN | C_ACTIVEOUT)) ==
 			    (C_ACTIVEIN | C_ACTIVEOUT))
 				active++;
-	}
+		}
 
-	if (active == 0)
-		return (CMD_ERROR); /* Recovery failed. */
+		if (active == 0)
+			return (CMD_ERROR); /* Recovery failed. */
 	}
 
 	return (CMD_OK);

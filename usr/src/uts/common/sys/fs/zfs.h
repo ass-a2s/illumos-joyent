@@ -26,6 +26,7 @@
  * Copyright (c) 2014 Integros [integros.com]
  * Copyright 2017 Joyent, Inc.
  * Copyright (c) 2017 Datto Inc.
+ * Copyright (c) 2017, Intel Corporation.
  */
 
 /* Portions Copyright 2010 Robert Milkowski */
@@ -163,6 +164,7 @@ typedef enum {
 	ZFS_PROP_PREV_SNAP,
 	ZFS_PROP_RECEIVE_RESUME_TOKEN,
 	ZFS_PROP_REMAPTXG,		/* not exposed to the user */
+	ZFS_PROP_SPECIAL_SMALL_BLOCKS,
 	ZFS_NUM_PROPS
 } zfs_prop_t;
 
@@ -213,6 +215,7 @@ typedef enum {
 	ZPOOL_PROP_CHECKPOINT,
 	ZPOOL_PROP_TNAME,
 	ZPOOL_PROP_MAXDNODESIZE,
+	ZPOOL_PROP_MULTIHOST,
 	ZPOOL_NUM_PROPS
 } zpool_prop_t;
 
@@ -580,6 +583,7 @@ typedef struct zpool_load_policy {
 #define	ZPOOL_CONFIG_RESILVER_TXG	"resilver_txg"
 #define	ZPOOL_CONFIG_COMMENT		"comment"
 #define	ZPOOL_CONFIG_SUSPENDED		"suspended"	/* not stored on disk */
+#define	ZPOOL_CONFIG_SUSPENDED_REASON	"suspended_reason"	/* not stored */
 #define	ZPOOL_CONFIG_TIMESTAMP		"timestamp"	/* not stored on disk */
 #define	ZPOOL_CONFIG_BOOTFS		"bootfs"	/* not stored on disk */
 #define	ZPOOL_CONFIG_MISSING_DEVICES	"missing_vdevs"	/* not stored on disk */
@@ -594,6 +598,12 @@ typedef struct zpool_load_policy {
 #define	ZPOOL_CONFIG_VDEV_LEAF_ZAP	"com.delphix:vdev_zap_leaf"
 #define	ZPOOL_CONFIG_HAS_PER_VDEV_ZAPS	"com.delphix:has_per_vdev_zaps"
 #define	ZPOOL_CONFIG_CACHEFILE		"cachefile"	/* not stored on disk */
+#define	ZPOOL_CONFIG_MMP_STATE		"mmp_state"	/* not stored on disk */
+#define	ZPOOL_CONFIG_MMP_TXG		"mmp_txg"	/* not stored on disk */
+#define	ZPOOL_CONFIG_MMP_HOSTNAME	"mmp_hostname"	/* not stored on disk */
+#define	ZPOOL_CONFIG_MMP_HOSTID		"mmp_hostid"	/* not stored on disk */
+#define	ZPOOL_CONFIG_ALLOCATION_BIAS	"alloc_bias"	/* not stored on disk */
+
 /*
  * The persistent vdev state is stored as separate values rather than a single
  * 'vdev_state' entry.  This is because a device can be in multiple states, such
@@ -638,6 +648,14 @@ typedef struct zpool_load_policy {
 	"com.delphix:obsolete_counts_are_precise"
 #define	VDEV_TOP_ZAP_POOL_CHECKPOINT_SM \
 	"com.delphix:pool_checkpoint_sm"
+
+#define	VDEV_TOP_ZAP_ALLOCATION_BIAS \
+	"org.zfsonlinux:allocation_bias"
+
+/* vdev metaslab allocation bias */
+#define	VDEV_ALLOC_BIAS_LOG		"log"
+#define	VDEV_ALLOC_BIAS_SPECIAL		"special"
+#define	VDEV_ALLOC_BIAS_DEDUP		"dedup"
 
 #define	VDEV_LEAF_ZAP_INITIALIZE_LAST_OFFSET	\
 	"com.delphix:next_offset_to_initialize"
@@ -704,6 +722,7 @@ typedef enum vdev_aux {
 	VDEV_AUX_BAD_LOG,	/* cannot read log chain(s)		*/
 	VDEV_AUX_EXTERNAL,	/* external diagnosis			*/
 	VDEV_AUX_SPLIT_POOL,	/* vdev was split off into another pool	*/
+	VDEV_AUX_ACTIVE,	/* vdev active on a different host	*/
 	VDEV_AUX_CHILDREN_OFFLINE /* all children are offline		*/
 } vdev_aux_t;
 
@@ -723,6 +742,16 @@ typedef enum pool_state {
 	POOL_STATE_UNAVAIL,		/* Internal libzfs state	*/
 	POOL_STATE_POTENTIALLY_ACTIVE	/* Internal libzfs state	*/
 } pool_state_t;
+
+/*
+ * mmp state. The following states provide additional detail describing
+ * why a pool couldn't be safely imported.
+ */
+typedef enum mmp_state {
+	MMP_STATE_ACTIVE = 0,		/* In active use		*/
+	MMP_STATE_INACTIVE,		/* Inactive and safe to import	*/
+	MMP_STATE_NO_HOSTID		/* System hostid is not set	*/
+} mmp_state_t;
 
 /*
  * Scan Functions.
@@ -1076,6 +1105,7 @@ typedef enum {
 #define	ZFS_IMPORT_ONLY		0x8
 #define	ZFS_IMPORT_CHECKPOINT	0x10
 #define	ZFS_IMPORT_TEMP_NAME	0x20
+#define	ZFS_IMPORT_SKIP_MMP	0x40
 
 /*
  * Channel program argument/return nvlist keys and defaults.
