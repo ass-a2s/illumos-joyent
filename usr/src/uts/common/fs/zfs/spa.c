@@ -907,19 +907,14 @@ spa_change_guid(spa_t *spa)
 static int
 spa_error_entry_compare(const void *a, const void *b)
 {
-	spa_error_entry_t *sa = (spa_error_entry_t *)a;
-	spa_error_entry_t *sb = (spa_error_entry_t *)b;
+	const spa_error_entry_t *sa = (const spa_error_entry_t *)a;
+	const spa_error_entry_t *sb = (const spa_error_entry_t *)b;
 	int ret;
 
-	ret = bcmp(&sa->se_bookmark, &sb->se_bookmark,
+	ret = memcmp(&sa->se_bookmark, &sb->se_bookmark,
 	    sizeof (zbookmark_phys_t));
 
-	if (ret < 0)
-		return (-1);
-	else if (ret > 0)
-		return (1);
-	else
-		return (0);
+	return (AVL_ISIGN(ret));
 }
 
 /*
@@ -1405,13 +1400,11 @@ spa_unload(spa_t *spa)
 	}
 
 	if (spa->spa_condense_zthr != NULL) {
-		ASSERT(!zthr_isrunning(spa->spa_condense_zthr));
 		zthr_destroy(spa->spa_condense_zthr);
 		spa->spa_condense_zthr = NULL;
 	}
 
 	if (spa->spa_checkpoint_discard_zthr != NULL) {
-		ASSERT(!zthr_isrunning(spa->spa_checkpoint_discard_zthr));
 		zthr_destroy(spa->spa_checkpoint_discard_zthr);
 		spa->spa_checkpoint_discard_zthr = NULL;
 	}
@@ -7228,12 +7221,12 @@ spa_async_suspend(spa_t *spa)
 	spa_vdev_remove_suspend(spa);
 
 	zthr_t *condense_thread = spa->spa_condense_zthr;
-	if (condense_thread != NULL && zthr_isrunning(condense_thread))
-		VERIFY0(zthr_cancel(condense_thread));
+	if (condense_thread != NULL)
+		zthr_cancel(condense_thread);
 
 	zthr_t *discard_thread = spa->spa_checkpoint_discard_zthr;
-	if (discard_thread != NULL && zthr_isrunning(discard_thread))
-		VERIFY0(zthr_cancel(discard_thread));
+	if (discard_thread != NULL)
+		zthr_cancel(discard_thread);
 }
 
 void
@@ -7246,11 +7239,11 @@ spa_async_resume(spa_t *spa)
 	spa_restart_removal(spa);
 
 	zthr_t *condense_thread = spa->spa_condense_zthr;
-	if (condense_thread != NULL && !zthr_isrunning(condense_thread))
+	if (condense_thread != NULL)
 		zthr_resume(condense_thread);
 
 	zthr_t *discard_thread = spa->spa_checkpoint_discard_zthr;
-	if (discard_thread != NULL && !zthr_isrunning(discard_thread))
+	if (discard_thread != NULL)
 		zthr_resume(discard_thread);
 }
 
