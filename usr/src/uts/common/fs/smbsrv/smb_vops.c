@@ -620,14 +620,23 @@ smb_vop_lookup(
 
 	pn_alloc(&rpn);
 
+	/*
+	 * Easier to not have junk in rpn, as not every FS type
+	 * will necessarily fill that in for us.
+	 */
+	bzero(rpn.pn_buf, rpn.pn_bufsize);
+
 	error = VOP_LOOKUP(dvp, np, vpp, NULL, option_flags, NULL, cr,
 	    &smb_ct, direntflags, &rpn);
 
 	if (error == 0) {
 		if (od_name) {
 			bzero(od_name, MAXNAMELEN);
-			np = (option_flags == FIGNORECASE) ? rpn.pn_buf : name;
-
+			if ((option_flags & FIGNORECASE) != 0 &&
+			    rpn.pn_buf[0] != '\0')
+				np = rpn.pn_buf;
+			else
+				np = name;
 			if (flags & SMB_CATIA)
 				smb_vop_catia_v4tov5(np, od_name, MAXNAMELEN);
 			else
@@ -677,6 +686,20 @@ smb_vop_create(vnode_t *dvp, char *name, smb_attr_t *attr, vnode_t **vpp,
 
 	error = VOP_CREATE(dvp, np, vap, EXCL, attr->sa_vattr.va_mode,
 	    vpp, cr, option_flags, &smb_ct, vsap);
+
+	/*
+	 * One could argue that filesystems should obey the size
+	 * if specified in the create attributes.  Unfortunately,
+	 * they only appear to let you truncate the size to zero.
+	 * SMB needs to set a non-zero size, so work-around.
+	 */
+	if (error == 0 && *vpp != NULL &&
+	    (vap->va_mask & AT_SIZE) != 0 &&
+	    vap->va_size > 0) {
+		vattr_t ta = *vap;
+		ta.va_mask = AT_SIZE;
+		(void) VOP_SETATTR(*vpp, &ta, 0, cr, &smb_ct);
+	}
 
 	return (error);
 }
@@ -1218,7 +1241,7 @@ smb_vop_acl_read(vnode_t *vp, acl_t **aclp, int flags, acl_type_t acl_type,
 		return (EINVAL);
 	}
 
-	if (error = VOP_GETSECATTR(vp, &vsecattr, flags, cr, &smb_ct))
+	if ((error = VOP_GETSECATTR(vp, &vsecattr, flags, cr, &smb_ct)) != 0)
 		return (error);
 
 	*aclp = smb_fsacl_from_vsa(&vsecattr, acl_type);
@@ -1448,11 +1471,31 @@ smb_vop_unshrlock(vnode_t *vp, uint32_t uniq_fid, cred_t *cr)
 	return (VOP_SHRLOCK(vp, F_UNSHARE, &shr, 0, cr, NULL));
 }
 
+/*
+ * Note about mandatory vs advisory locks:
+ *
+ * The SMB server really should always request mandatory locks, and
+ * if the file system does not support them, the SMB server should
+ * just tell the client it could not get the lock. If we were to
+ * tell the SMB client "you got the lock" when what they really
+ * got was only an advisory lock, we would be lying to the client
+ * about their having exclusive access to the locked range, which
+ * could easily lead to data corruption.  If someone really wants
+ * the (dangerous) behavior they can set: smb_allow_advisory_locks
+ */
 int
 smb_vop_frlock(vnode_t *vp, cred_t *cr, int flag, flock64_t *bf)
 {
-	int cmd = nbl_need_check(vp) ? F_SETLK_NBMAND : F_SETLK;
 	flk_callback_t flk_cb;
+	int cmd = F_SETLK_NBMAND;
+
+	if (smb_allow_advisory_locks != 0 && !nbl_need_check(vp)) {
+		/*
+		 * The file system does not support nbmand, and
+		 * smb_allow_advisory_locks is enabled. (danger!)
+		 */
+		cmd = F_SETLK;
+	}
 
 	flk_init_callback(&flk_cb, smb_lock_frlock_callback, NULL);
 

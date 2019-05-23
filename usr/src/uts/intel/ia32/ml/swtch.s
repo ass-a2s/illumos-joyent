@@ -24,7 +24,7 @@
  */
 
 /*
- * Copyright (c) 2018 Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/segments.h>
 #include <sys/psw.h>
 
-#if !defined(__lint)
 #include "assym.h"
 
 /*
@@ -343,7 +342,7 @@
 	call	smap_disable
 .nosmap:
 
-	call	ht_mark
+	call	smt_mark
 
 	/*
 	 * Restore non-volatile registers, then have spl0 return to the
@@ -465,7 +464,7 @@ resume_from_zombie_return:
 
 	STORE_INTR_START(%r12)
 
-	call	ht_mark
+	call	smt_mark
 
 	/*
 	 * Restore non-volatile registers, then have spl0 return to the
@@ -533,5 +532,3 @@ resume_from_intr_return:
 	movq	%rax, TSS_RSP0(%r9)
 	ret
 	SET_SIZE(thread_splitstack_cleanup)
-
-#endif /* !__lint */
