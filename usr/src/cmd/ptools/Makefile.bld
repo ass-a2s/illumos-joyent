@@ -164,7 +164,7 @@ $(PROG): $$(OBJS)
 # Install the ptool, symlinking it into /usr/proc/bin if PTOOL_TYPE is set
 # to LEGACY.
 #
-install: all $(ROOTISAPROG) $(ROOTISALN)
+install: all $(ROOTISAPROG) $(ROOTISALN) $(ROOTBINLN)
 	-$(RM) $(ROOTBINPROG)
 	-$(LN) $(ISAEXEC) $(ROOTBINPROG)
 	-$(INSTALL_$(PTOOL_TYPE))
