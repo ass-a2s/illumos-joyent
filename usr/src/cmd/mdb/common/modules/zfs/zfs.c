@@ -22,10 +22,21 @@
  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2011 Nexenta Systems, Inc. All rights reserved.
  * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
- * Copyright (c) 2017, Joyent, Inc.  All rights reserved.
+ * Copyright (c) 2019 Joyent, Inc.
  */
 
 /* Portions Copyright 2010 Robert Milkowski */
+
+/*
+ * ZFS_MDB lets dmu.h know that we don't have dmu_ot, and we will define our
+ * own macros to access the target's dmu_ot.  Therefore it must be defined
+ * before including any ZFS headers.  Note that we don't define
+ * DMU_OT_IS_ENCRYPTED_IMPL() or DMU_OT_BYTESWAP_IMPL(), therefore using them
+ * will result in a compilation error.  If they are needed in the future, we
+ * can implement them similarly to mdb_dmu_ot_is_encrypted_impl().
+ */
+#define	ZFS_MDB
+#define	DMU_OT_IS_ENCRYPTED_IMPL(ot) mdb_dmu_ot_is_encrypted_impl(ot)
 
 #include <mdb/mdb_ctf.h>
 #include <sys/zfs_context.h>
@@ -565,6 +576,30 @@ dva(uintptr_t addr, uint_t flags, int argc, const mdb_arg_t *argv)
 	    (u_longlong_t)DVA_GET_ASIZE(&dva));
 
 	return (DCMD_OK);
+}
+
+typedef struct mdb_dmu_object_type_info {
+	boolean_t ot_encrypt;
+} mdb_dmu_object_type_info_t;
+
+static boolean_t
+mdb_dmu_ot_is_encrypted_impl(dmu_object_type_t ot)
+{
+	mdb_dmu_object_type_info_t mdoti;
+	GElf_Sym sym;
+	size_t sz = mdb_ctf_sizeof_by_name("dmu_object_type_info_t");
+
+	if (mdb_lookup_by_obj(ZFS_OBJ_NAME, "dmu_ot", &sym)) {
+		mdb_warn("failed to find " ZFS_OBJ_NAME "`dmu_ot");
+		return (B_FALSE);
+	}
+
+	if (mdb_ctf_vread(&mdoti, "dmu_object_type_info_t",
+	    "mdb_dmu_object_type_info_t", sym.st_value + sz * ot, 0) != 0) {
+		return (B_FALSE);
+	}
+
+	return (mdoti.ot_encrypt);
 }
 
 /* ARGSUSED */
@@ -1461,7 +1496,6 @@ typedef struct mdb_space_map_phys_t {
 typedef struct mdb_space_map {
 	uint64_t sm_size;
 	uint8_t sm_shift;
-	int64_t sm_alloc;
 	uintptr_t sm_phys;
 } mdb_space_map_t;
 
@@ -1505,6 +1539,7 @@ metaslab_stats(uintptr_t addr, int spa_flags)
 	for (int m = 0; m < vdev.vdev_ms_count; m++) {
 		mdb_metaslab_t ms;
 		mdb_space_map_t sm = { 0 };
+		mdb_space_map_phys_t smp;
 		char free[MDB_NICENUM_BUFLEN];
 
 		if (mdb_ctf_vread(&ms, "metaslab_t", "mdb_metaslab_t",
@@ -1516,7 +1551,13 @@ metaslab_stats(uintptr_t addr, int spa_flags)
 		    ms.ms_sm, 0) == -1)
 			return (DCMD_ERR);
 
-		mdb_nicenum(ms.ms_size - sm.sm_alloc, free);
+		if (sm.sm_phys != 0) {
+			(void) mdb_ctf_vread(&smp, "space_map_phys_t",
+			    "mdb_space_map_phys_t", sm.sm_phys, 0);
+			mdb_nicenum(ms.ms_size - smp.smp_alloc, free);
+		} else {
+			(void) mdb_snprintf(free, MDB_NICENUM_BUFLEN, "-");
+		}
 
 		mdb_printf("%0?p %6llu %20llx %10s ", vdev_ms[m], ms.ms_id,
 		    ms.ms_start, free);
@@ -1526,13 +1567,8 @@ metaslab_stats(uintptr_t addr, int spa_flags)
 			mdb_printf("%9llu%%\n", ms.ms_fragmentation);
 
 		if ((spa_flags & SPA_FLAG_HISTOGRAMS) && ms.ms_sm != 0) {
-			mdb_space_map_phys_t smp;
-
 			if (sm.sm_phys == 0)
 				continue;
-
-			(void) mdb_ctf_vread(&smp, "space_map_phys_t",
-			    "mdb_space_map_phys_t", sm.sm_phys, 0);
 
 			dump_histogram(smp.smp_histogram,
 			    SPACE_MAP_HISTOGRAM_SIZE, sm.sm_shift);
@@ -2076,7 +2112,6 @@ typedef struct space_data {
 	uint64_t ms_freed;
 	uint64_t ms_allocatable;
 	int64_t ms_deferspace;
-	uint64_t avail;
 	uint64_t nowavail;
 } space_data_t;
 
@@ -2135,7 +2170,6 @@ space_cb(uintptr_t addr, const void *unknown, void *arg)
 	}
 
 	sd->ms_deferspace += ms.ms_deferspace;
-	sd->avail += sm.sm_size - sm.sm_alloc;
 	sd->nowavail += sm.sm_size - smp.smp_alloc;
 
 	return (WALK_NEXT);
@@ -2220,8 +2254,6 @@ spa_space(uintptr_t addr, uint_t flags, int argc, const mdb_arg_t *argv)
 	    sd.ms_allocatable >> shift, suffix);
 	mdb_printf("ms_deferspace = %llu%s\n",
 	    sd.ms_deferspace >> shift, suffix);
-	mdb_printf("last synced avail = %llu%s\n",
-	    sd.avail >> shift, suffix);
 	mdb_printf("current syncing avail = %llu%s\n",
 	    sd.nowavail >> shift, suffix);
 
@@ -2842,13 +2874,6 @@ zfs_blkstats(uintptr_t addr, uint_t flags, int argc, const mdb_arg_t *argv)
 	dmu_object_type_t t;
 	zfs_blkstat_t *tzb;
 	uint64_t ditto;
-	dmu_object_type_info_t dmu_ot[DMU_OT_NUMTYPES + 10];
-	/* +10 in case it grew */
-
-	if (mdb_readvar(&dmu_ot, "dmu_ot") == -1) {
-		mdb_warn("failed to read 'dmu_ot'");
-		return (DCMD_ERR);
-	}
 
 	if (mdb_getopts(argc, argv,
 	    'v', MDB_OPT_SETBITS, TRUE, &verbose,
@@ -2897,8 +2922,8 @@ zfs_blkstats(uintptr_t addr, uint_t flags, int argc, const mdb_arg_t *argv)
 			strcpy(typename, "other");
 		else if (t == DMU_OT_TOTAL)
 			strcpy(typename, "Total");
-		else if (mdb_readstr(typename, sizeof (typename),
-		    (uintptr_t)dmu_ot[t].ot_name) == -1) {
+		else if (enum_lookup("enum dmu_object_type",
+		    t, "DMU_OT_", sizeof (typename), typename) == -1) {
 			mdb_warn("failed to read type name");
 			return (DCMD_ERR);
 		}

@@ -574,6 +574,7 @@ svm_vminit(struct vm *vm, pmap_t pmap)
 	struct svm_vcpu *vcpu;
 	vm_paddr_t msrpm_pa, iopm_pa, pml4_pa;
 	int i;
+	uint16_t maxcpus;
 
 	svm_sc = malloc(sizeof (*svm_sc), M_SVM, M_WAITOK | M_ZERO);
 	if (((uintptr_t)svm_sc & PAGE_MASK) != 0)
@@ -627,7 +628,8 @@ svm_vminit(struct vm *vm, pmap_t pmap)
 	iopm_pa = vtophys(svm_sc->iopm_bitmap);
 	msrpm_pa = vtophys(svm_sc->msr_bitmap);
 	pml4_pa = svm_sc->nptp;
-	for (i = 0; i < VM_MAXCPU; i++) {
+	maxcpus = vm_get_maxcpus(svm_sc->vm);
+	for (i = 0; i < maxcpus; i++) {
 		vcpu = svm_get_vcpu(svm_sc, i);
 		vcpu->nextrip = ~0;
 		vcpu->lastcpu = NOCPU;
@@ -1627,6 +1629,8 @@ svm_inj_interrupts(struct svm_softc *sc, int vcpu, struct vlapic *vlapic)
 
 	need_intr_window = 0;
 
+	vlapic_tmr_update(vlapic);
+
 	if (vcpustate->nextrip != state->rip) {
 		ctrl->intr_shadow = 0;
 		VCPU_CTR2(sc->vm, vcpu, "Guest interrupt blocking "
@@ -2058,8 +2062,8 @@ svm_vmrun(void *arg, int vcpu, register_t rip, pmap_t pmap,
 		 * XXX
 		 * Setting 'vcpustate->lastcpu' here is bit premature because
 		 * we may return from this function without actually executing
-		 * the VMRUN  instruction. This could happen if a rendezvous
-		 * or an AST is pending on the first time through the loop.
+		 * the VMRUN  instruction. This could happen if an AST or yield
+		 * condition is pending on the first time through the loop.
 		 *
 		 * This works for now but any new side-effects of vcpu
 		 * migration should take this case into account.
@@ -2104,9 +2108,9 @@ svm_vmrun(void *arg, int vcpu, register_t rip, pmap_t pmap,
 			break;
 		}
 
-		if (vcpu_rendezvous_pending(evinfo)) {
+		if (vcpu_runblocked(evinfo)) {
 			enable_gintr();
-			vm_exit_rendezvous(vm, vcpu, state->rip);
+			vm_exit_runblock(vm, vcpu, state->rip);
 			break;
 		}
 

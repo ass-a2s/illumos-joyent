@@ -88,7 +88,7 @@ vmm_stat_copy(struct vm *vm, int vcpu, int *num_stats, uint64_t *buf)
 	uint64_t *stats;
 	int i;
 
-	if (vcpu < 0 || vcpu >= VM_MAXCPU)
+	if (vcpu < 0 || vcpu >= vm_get_maxcpus(vm))
 		return (EINVAL);
 
 	/* Let stats functions update their counters */
@@ -168,5 +168,5 @@ VMM_STAT(VMEXIT_UNKNOWN, "number of vm exits for unknown reason");
 VMM_STAT(VMEXIT_ASTPENDING, "number of times astpending at exit");
 VMM_STAT(VMEXIT_REQIDLE, "number of times idle requested at exit");
 VMM_STAT(VMEXIT_USERSPACE, "number of vm exits handled in userspace");
-VMM_STAT(VMEXIT_RENDEZVOUS, "number of times rendezvous pending at exit");
+VMM_STAT(VMEXIT_RUNBLOCK, "number of times runblock at exit");
 VMM_STAT(VMEXIT_EXCEPTION, "number of vm exits due to exceptions");

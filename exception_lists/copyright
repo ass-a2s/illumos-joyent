@@ -106,6 +106,7 @@ usr/src/cmd/krb5/ldap_util/kdb5_ldap_realm.h
 usr/src/cmd/krb5/ldap_util/kdb5_ldap_services.h
 usr/src/cmd/localedef/data/manual-input.UTF-8
 usr/src/cmd/smbsrv/smbd/eventlog.dll
+usr/src/cmd/smbsrv/testoplock/case*
 usr/src/cmd/terminfo/termcap.src
 usr/src/cmd/terminfo/terminfo.src
 usr/src/common/bzip2/LICENSE
@@ -499,6 +500,7 @@ usr/src/cmd/bhyve/console.[ch]
 usr/src/cmd/bhyve/consport.c
 usr/src/cmd/bhyve/dbgport.[ch]
 usr/src/cmd/bhyve/fwctl.[ch]
+usr/src/cmd/bhyve/gdb.[ch]
 usr/src/cmd/bhyve/inout.[ch]
 usr/src/cmd/bhyve/ioapic.[ch]
 usr/src/cmd/bhyve/mem.[ch]
@@ -512,11 +514,13 @@ usr/src/cmd/bhyve/pci_fbuf.c
 usr/src/cmd/bhyve/pci_hostbridge.c
 usr/src/cmd/bhyve/pci_irq.[ch]
 usr/src/cmd/bhyve/pci_lpc.[ch]
+usr/src/cmd/bhyve/pci_nvme.c
 usr/src/cmd/bhyve/pci_passthru.c
 usr/src/cmd/bhyve/pci_uart.c
 usr/src/cmd/bhyve/pci_virtio_block.c
 usr/src/cmd/bhyve/pci_virtio_net.c
 usr/src/cmd/bhyve/pci_virtio_rnd.c
+usr/src/cmd/bhyve/pci_virtio_scsi.c
 usr/src/cmd/bhyve/pci_xhci.[ch]
 usr/src/cmd/bhyve/pm.c
 usr/src/cmd/bhyve/pmtmr.c
@@ -549,6 +553,7 @@ usr/src/uts/i86pc/io/vmm/amd/*.[chs]
 usr/src/uts/i86pc/io/vmm/intel/*.[chs]
 usr/src/uts/i86pc/io/vmm/intel/offsets.in
 usr/src/uts/i86pc/io/vmm/io/*.[ch]
+usr/src/uts/i86pc/io/vmm/README.sync
 usr/src/uts/i86pc/io/vmm/vmm.c
 usr/src/uts/i86pc/io/vmm/vmm_host.[ch]
 usr/src/uts/i86pc/io/vmm/vmm_instruction_emul.c

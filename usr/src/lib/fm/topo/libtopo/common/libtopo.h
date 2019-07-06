@@ -23,7 +23,7 @@
  * Copyright (c) 2006, 2010, Oracle and/or its affiliates. All rights reserved.
  */
 /*
- * Copyright (c) 2019, Joyent, Inc. All rights reserved.
+ * Copyright 2019 Joyent, Inc.
  */
 
 #ifndef _LIBTOPO_H
@@ -293,6 +293,7 @@ typedef enum topo_hdl_errno {
 
 extern const char *topo_strerror(int);
 extern void topo_hdl_strfree(topo_hdl_t *, char *);
+extern void topo_hdl_strfreev(topo_hdl_t *, char **, uint_t);
 extern void topo_debug_set(topo_hdl_t *, const char *, const char *);
 
 /*
@@ -1018,9 +1019,34 @@ typedef enum topo_led_type {
 } topo_led_type_t;
 
 typedef enum topo_slot_type {
-	TOPO_SLOT_TYPE_DIMM = 1
+	TOPO_SLOT_TYPE_DIMM = 1,
+	TOPO_SLOT_TYPE_UFM
 } topo_slot_type_t;
 
+/*
+ * Read permission indicates that we can read the raw firmware image in this
+ * slot off of the device.
+ *
+ * Write permission indicates that we can write a firmware image into this
+ * slot.
+ *
+ * These permission are orthogonal to the ability to simply report information
+ * about the firmware image in a slot.
+ */
+typedef enum topo_ufm_slot_mode {
+	TOPO_UFM_SLOT_MODE_NONE = 1,
+	TOPO_UFM_SLOT_MODE_RO,
+	TOPO_UFM_SLOT_MODE_WO,
+	TOPO_UFM_SLOT_MODE_RW
+} topo_ufm_slot_mode_t;
+
+typedef struct topo_ufm_slot_info {
+	uint32_t usi_slotid;
+	topo_ufm_slot_mode_t usi_mode;
+	const char *usi_version;
+	boolean_t usi_active;
+	nvlist_t *usi_extra;
+} topo_ufm_slot_info_t;
 
 #ifdef __cplusplus
 }

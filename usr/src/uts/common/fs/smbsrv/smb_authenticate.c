@@ -51,6 +51,7 @@ static uint32_t smb_priv_xlate(smb_token_t *);
 
 /*
  * Handle old-style session setup (non-extended security)
+ * Note: Used only by SMB1
  *
  * The user information is passed to smbd for authentication.
  * If smbd can authenticate the user an access token is returned and we
@@ -69,6 +70,7 @@ smb_authenticate_old(smb_request_t *sr)
 	/* user cleanup in smb_request_free */
 	sr->uid_user = user;
 	sr->smb_uid = user->u_uid;
+	sr->smb2_ssnid = 0;
 
 	/*
 	 * Open a connection to the local logon service.
@@ -231,20 +233,42 @@ smb_authenticate_ext(smb_request_t *sr)
 	ASSERT(sr->uid_user == NULL);
 
 	/*
-	 * On the first request (UID==0) create a USER object.
-	 * On subsequent requests (UID!=0) find the USER object.
+	 * Paranoid:  While finding/creating the user object, make sure
+	 * SMB2 ignores smb_uid, and SMB1 ignores smb2_ssnid.  The
+	 * logic below assumes the "other" one is always zero; both
+	 * the "first request" tests and smb_session_lookup_uid_st.
+	 */
+	if (sr->session->dialect >= SMB_VERS_2_BASE) {
+		/* SMB2+ ignores smb_uid */
+		ASSERT(sr->smb_uid == 0);
+		sr->smb_uid = 0;
+	} else {
+		/* SMB1 ignores smb2_ssnid */
+		ASSERT(sr->smb2_ssnid == 0);
+		sr->smb2_ssnid = 0;
+	}
+
+	/*
+	 * On the first request (UID/ssnid==0) create a USER object.
+	 * On subsequent requests (UID/ssnid!=0) find the USER object.
 	 * Either way, sr->uid_user is set, so our ref. on the
 	 * user object is dropped during normal cleanup work
 	 * for the smb_request (sr).  Ditto u_authsock.
 	 */
-	if (sr->smb_uid == 0) {
+	if (sr->smb2_ssnid == 0 && sr->smb_uid == 0) {
 		user = smb_user_new(sr->session);
 		if (user == NULL)
 			return (NT_STATUS_TOO_MANY_SESSIONS);
 
 		/* user cleanup in smb_request_free */
 		sr->uid_user = user;
-		sr->smb_uid = user->u_uid;
+		if (sr->session->dialect >= SMB_VERS_2_BASE) {
+			/* Intentionally leave smb_uid=0 for SMB2 */
+			sr->smb2_ssnid = user->u_ssnid;
+		} else {
+			/* Intentionally leave smb2_ssnid=0 for SMB1 */
+			sr->smb_uid = user->u_uid;
+		}
 
 		/*
 		 * Open a connection to the local logon service.
@@ -263,7 +287,7 @@ smb_authenticate_ext(smb_request_t *sr)
 		msg_hdr.lmh_msgtype = LSA_MTYPE_ESFIRST;
 	} else {
 		user = smb_session_lookup_uid_st(sr->session,
-		    sr->smb_uid, SMB_USER_STATE_LOGGING_ON);
+		    sr->smb2_ssnid, sr->smb_uid, SMB_USER_STATE_LOGGING_ON);
 		if (user == NULL)
 			return (NT_STATUS_USER_SESSION_DELETED);
 
@@ -388,7 +412,6 @@ smb_auth_get_token(smb_request_t *sr)
 	uint32_t	rlen = 0;
 	uint32_t	privileges;
 	uint32_t	status;
-	int		rc;
 	bool_t		ok;
 
 	msg_hdr.lmh_msgtype = LSA_MTYPE_GETTOK;
@@ -445,18 +468,30 @@ smb_auth_get_token(smb_request_t *sr)
 	crfree(cr);
 
 	/*
+	 * Some basic processing for encryption needs to be done,
+	 * even for anonymous/guest sessions. In particular,
+	 * we need to set Session.EncryptData.
+	 *
+	 * Windows handling of anon/guest and encryption is strange.
+	 * It allows these accounts to get through session setup,
+	 * even when they provide no key material.
+	 * Additionally, Windows somehow manages to have key material
+	 * for anonymous accounts under unknown circumstances.
+	 * As such, We set EncryptData on anon/guest to behave like Windows,
+	 * at least through Session Setup.
+	 */
+	if (sr->session->dialect >= SMB_VERS_3_0)
+		smb3_encrypt_begin(sr, token);
+
+	/*
 	 * Save the session key, and (maybe) enable signing,
 	 * but only for real logon (not ANON or GUEST).
 	 */
 	if ((token->tkn_flags & (SMB_ATF_GUEST | SMB_ATF_ANON)) == 0) {
 		if (sr->session->dialect >= SMB_VERS_2_BASE) {
-			rc = smb2_sign_begin(sr, token);
+			smb2_sign_begin(sr, token);
 		} else {
-			rc = smb_sign_begin(sr, token);
-		}
-		if (rc != 0) {
-			status = NT_STATUS_INTERNAL_ERROR;
-			goto errout;
+			smb_sign_begin(sr, token);
 		}
 	}
 
@@ -549,7 +584,7 @@ smb_authsock_cancel(smb_request_t *sr)
  */
 static uint32_t
 smb_authsock_sendrecv(smb_request_t *sr, smb_lsa_msg_hdr_t *hdr,
-	void *sndbuf, void **recvbuf)
+    void *sndbuf, void **recvbuf)
 {
 	smb_user_t *user = sr->uid_user;
 	ksocket_t so;

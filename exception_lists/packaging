@@ -604,6 +604,7 @@ usr/lib/smbsrv/libmlsvc.so
 usr/lib/smbsrv/libsmb.so
 usr/lib/smbsrv/libsmbns.so
 usr/lib/smbsrv/test-msgbuf
+usr/lib/smbsrv/testoplock
 #
 #
 # Private/Internal 64-bit libraries of smbsrv. Do not ship.
@@ -863,3 +864,8 @@ usr/lib/libdwarf.so
 #
 usr/bin/ctfconvert
 usr/bin/ctfmerge
+
+#
+# SPARC doesn't currently use this today, though it may in the future.
+#
+usr/include/sys/sensors.h	sparc

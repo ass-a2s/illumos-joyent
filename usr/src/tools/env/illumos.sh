@@ -23,7 +23,7 @@
 # Copyright 2012 Joshua M. Clulow <josh@sysmgr.org>
 # Copyright 2015, OmniTI Computer Consulting, Inc. All rights reserved.
 # Copyright 2018 OmniOS Community Edition (OmniOSce) Association.
-# Copyright (c) 2019, Joyent, Inc.
+# Copyright 2019, Joyent, Inc.
 #
 # - This file is sourced by "bldenv.sh" and "nightly.sh" and should not
 #   be executed directly.
@@ -78,8 +78,11 @@ export CODEMGR_WS="`git rev-parse --show-toplevel`"
 #
 # To disable shadow compilation, unset SHADOW_* or set them to the empty string.
 #
-export SHADOW_CCS=gcc7,/usr/gcc/7/bin/gcc,gnu
-export SHADOW_CCCS=gcc7,/usr/gcc/7/bin/g++,gnu
+export GNUC_ROOT=/usr/gcc/7
+export PRIMARY_CCS=gcc7,$GNUC_ROOT/bin/gcc,gnu
+export PRIMARY_CCCS=gcc7,$GNUC_ROOT/bin/g++,gnu
+export SHADOW_CCS=gcc4,/opt/gcc/4.4.4/bin/gcc,gnu
+export SHADOW_CCCS=gcc4,/opt/gcc/4.4.4/bin/g++,gnu
 
 # uncomment to enable smatch
 #export ENABLE_SMATCH=1
@@ -278,13 +281,6 @@ export BUILD_TOOLS='/opt'
 #export ONBLD_TOOLS='/opt/onbld'
 export SPRO_ROOT='/opt/SUNWspro'
 export SPRO_VROOT="$SPRO_ROOT"
-
-# This goes along with lint - it is a series of the form "A [y|n]" which
-# means "go to directory A and run 'make lint'" Then mail me (y) the
-# difference in the lint output. 'y' should only be used if the area you're
-# linting is actually lint clean or you'll get lots of mail.
-# You shouldn't need to change this though.
-#export LINTDIRS="$SRC y"
 
 # Set this flag to 'n' to disable the use of 'checkpaths'.  The default,
 # if the 'N' option is not specified, is to run this test.
