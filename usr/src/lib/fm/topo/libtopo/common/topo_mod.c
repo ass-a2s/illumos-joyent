@@ -989,7 +989,7 @@ topo_mod_create_ufm_slot(topo_mod_t *mod, tnode_t *ufmnode,
 	if (slotinfo == NULL || slotinfo->usi_version == NULL ||
 	    slotinfo->usi_mode == 0) {
 		topo_mod_dprintf(mod, "invalid slot info");
-		topo_mod_seterrno(mod, ETOPO_MOD_INVAL);
+		(void) topo_mod_seterrno(mod, ETOPO_MOD_INVAL);
 		return (NULL);
 	}
 	if ((auth = topo_mod_auth(mod, ufmnode)) == NULL) {
@@ -1025,7 +1025,7 @@ topo_mod_create_ufm_slot(topo_mod_t *mod, tnode_t *ufmnode,
 	nvlist_free(fmri);
 
 	/* Just inherit the parent's FRU */
-	if (topo_node_fru_set(slotnode, NULL, NULL, &err) != 0) {
+	if (topo_node_fru_set(slotnode, NULL, 0, &err) != 0) {
 		topo_mod_dprintf(mod, "failed to set FRU on %s: %s", UFM,
 		    topo_strerror(err));
 		(void) topo_mod_seterrno(mod, err);
@@ -1153,7 +1153,7 @@ topo_mod_create_ufm(topo_mod_t *mod, tnode_t *parent, const char *descr,
 	nvlist_free(fmri);
 
 	/* Just inherit the parent's FRU */
-	if (topo_node_fru_set(ufmnode, NULL, NULL, &err) != 0) {
+	if (topo_node_fru_set(ufmnode, NULL, 0, &err) != 0) {
 		topo_mod_dprintf(mod, "failed to set FRU on %s: %s", UFM,
 		    topo_strerror(err));
 		(void) topo_mod_seterrno(mod, err);

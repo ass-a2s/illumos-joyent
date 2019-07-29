@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+
 #
 # This file and its contents are supplied under the terms of the
 # Common Development and Distribution License ("CDDL"), version 1.0.
@@ -10,23 +12,21 @@
 #
 
 #
-# Copyright 2016 Toomas Soome <tsoome@me.com>
-# Copyright 2016 RackTop Systems.
 # Copyright 2019 Joyent, Inc.
 #
 
-MACHINE=	$(MACH)
+grep ufmtest /etc/name_to_major &> /dev/null
+if [[ $? -eq 1 ]]; then
+	printf "ufmtest driver is not currently installed\n"
+	exit 0
+fi
 
-all:		libefi.a
+printf "Removing ufmtest driver ...\n"
+/usr/sbin/rem_drv ufmtest
+if [[ $? -ne 0 ]]; then
+	printf "Failed to remove the ufmtest driver.\n" 1>&2
+	exit 1
+else
+	exit 0
+fi
 
-SRCS=	time.c
-include ../Makefile.com
-
-CFLAGS +=	-m32
-
-# false positive only with a 64-bit smatch
-SMOFF += uninitialized
-
-CLEANFILES +=	machine x86
-
-$(OBJS): machine x86
