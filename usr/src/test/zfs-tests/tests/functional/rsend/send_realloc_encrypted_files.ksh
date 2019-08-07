@@ -72,7 +72,6 @@ for i in {1..5}; do
 	rand_set_prop $POOL/fs compression "off" "lzjb" "gzip" "lz4"
 	rand_set_prop $POOL/fs recordsize "32K" "128K"
 	rand_set_prop $POOL/fs dnodesize "legacy" "auto" "4k"
-	rand_set_prop $POOL/fs xattr "on" "sa"
 
 	# Churn the filesystem in such a way that we're likely to be both
 	# allocating and reallocating objects in the incremental stream.
