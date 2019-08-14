@@ -268,6 +268,7 @@ f etc/bash/bash_completion 0644 root sys
 d etc/bash/bash_completion.d 0755 root sys
 f etc/bash/bash_completion.d/dladm 0644 root sys
 f etc/bash/bash_completion.d/zones 0644 root sys
+f etc/bash/bash_completion.d/zone_alias 0644 root sys
 d etc/brand 0755 root sys
 d etc/certs 0755 root sys
 d etc/cron.d 0755 root sys
@@ -577,6 +578,11 @@ f etc/zshrc 0644 root bin
 d kernel 0755 root sys
 d kernel/amd64 0755 root sys
 f kernel/amd64/genunix 0755 root sys
+d kernel/cc 0755 root sys
+d kernel/cc/amd64 0755 root sys
+f kernel/cc/amd64/cc_cubic 0755 root sys
+f kernel/cc/amd64/cc_newreno 0755 root sys
+f kernel/cc/amd64/cc_sunreno 0755 root sys
 d kernel/crypto 0755 root sys
 d kernel/crypto/amd64 0755 root sys
 f kernel/crypto/amd64/aes 0755 root sys
@@ -1059,6 +1065,7 @@ f kernel/misc/amd64/acpica 0755 root sys
 f kernel/misc/amd64/bignum 0755 root sys
 f kernel/misc/amd64/bootdev 0755 root sys
 f kernel/misc/amd64/busra 0755 root sys
+f kernel/misc/amd64/cc 0755 root sys
 f kernel/misc/amd64/cmlb 0755 root sys
 f kernel/misc/amd64/consconfig 0755 root sys
 f kernel/misc/amd64/ctf 0755 root sys
@@ -5891,9 +5898,9 @@ s usr/lib/fs/smbfs/amd64/libshare_smbfs.so=libshare_smbfs.so.1
 f usr/lib/fs/smbfs/dfshares 0555 root bin
 f usr/lib/fs/smbfs/libshare_smbfs.so.1 0755 root sys
 s usr/lib/fs/smbfs/libshare_smbfs.so=libshare_smbfs.so.1
-f usr/lib/fs/smbfs/mount 0555 root bin
+f usr/lib/fs/smbfs/mount 4555 root bin
 f usr/lib/fs/smbfs/share 0555 root bin
-f usr/lib/fs/smbfs/umount 0555 root bin
+f usr/lib/fs/smbfs/umount 4555 root bin
 f usr/lib/fs/smbfs/unshare 0555 root bin
 d usr/lib/fs/tmpfs 0755 root sys
 f usr/lib/fs/tmpfs/mount 0555 root bin
