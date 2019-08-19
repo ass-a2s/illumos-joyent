@@ -38,6 +38,11 @@ clean	:=	TARGET = clean
 clobber	:=	TARGET = clobber
 lint	:=	TARGET = lint
 
+CFLAGS += $(CCVERBOSE)
+CERRWARN += -_gcc=-Wno-switch
+CERRWARN += -_gcc=-Wno-parentheses
+CERRWARN += $(CNOWARN_UNINIT)
+
 XGETFLAGS += -a -x zoneadmd.xcl
 
 ROOTUSRLIBZONES			= $(ROOT)/usr/lib/zones

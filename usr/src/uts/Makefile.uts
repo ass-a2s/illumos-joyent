@@ -26,7 +26,7 @@
 # Copyright (c) 2013 Andrew Stormont.  All rights reserved.
 # Copyright 2018 Joyent, Inc.
 # Copyright 2016 Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
-# Copyright (c) 2019, Joyent, Inc.
+# Copyright 2019 Joyent, Inc.
 #
 
 #
@@ -223,6 +223,11 @@ CERRWARN += -_gcc=-Wno-unknown-pragmas
 CERRWARN += -_gcc=-Wno-unused-parameter
 CERRWARN += -_gcc=-Wno-missing-field-initializers
 
+# gcc4 lacks -Wno-maybe-uninitialized
+CNOWARN_UNINIT = -_gcc4=-Wno-uninitialized \
+    -_gcc7=-Wno-maybe-uninitialized \
+    -_gcc8=-Wno-maybe-uninitialized
+
 # DEBUG v. -nd make for frequent unused variables, empty conditions, etc. in
 # -nd builds
 $(RELEASE_BUILD)CERRWARN += -_gcc=-Wno-unused
@@ -236,6 +241,15 @@ include $(SRC)/Makefile.smatch
 # so we have to disable all these smatch checks.
 #
 SMOFF += sizeof
+
+#
+# Add specific compiler options that are required based on the
+# architecture in question.
+#
+CFLAGS_uts_i386 += -_gcc7=-mindirect-branch=thunk-extern
+CFLAGS_uts_i386 += -_gcc7=-mindirect-branch-register
+CFLAGS_uts_i386 += -_gcc8=-mindirect-branch=thunk-extern
+CFLAGS_uts_i386 += -_gcc8=-mindirect-branch-register
 
 CSTD = $(CSTD_GNU99)
 
@@ -253,6 +267,7 @@ CFLAGS_uts		+= $(CGLOBALSTATIC)
 CFLAGS_uts		+= $(EXTRA_CFLAGS)
 CFLAGS_uts		+= $(CSOURCEDEBUGFLAGS)
 CFLAGS_uts		+= $(CUSERFLAGS)
+CFLAGS_uts		+= $(CFLAGS_uts_$(MACH))
 
 #
 #	Declare that $(OBJECTS) and $(LINTS) can be compiled in parallel.

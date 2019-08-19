@@ -346,9 +346,6 @@ etc/svc/profile/platform_SUNW,SPARC-Enterprise.xml		i386
 etc/svc/profile/platform_SUNW,Sun-Fire-880.xml			i386
 etc/svc/profile/platform_SUNW,Sun-Fire-V890.xml			i386
 etc/svc/profile/platform_SUNW,Sun-Fire.xml			i386
-etc/svc/profile/platform_SUNW,UltraSPARC-IIe-NetraCT-40.xml	i386
-etc/svc/profile/platform_SUNW,UltraSPARC-IIe-NetraCT-60.xml	i386
-etc/svc/profile/platform_SUNW,UltraSPARC-IIi-Netract.xml	i386
 #
 # Private libuutil files
 #
@@ -603,6 +600,7 @@ usr/lib/smbsrv/libfksmbsrv.so.1
 usr/lib/smbsrv/libmlsvc.so
 usr/lib/smbsrv/libsmb.so
 usr/lib/smbsrv/libsmbns.so
+usr/lib/smbsrv/nvlprint
 usr/lib/smbsrv/test-msgbuf
 usr/lib/smbsrv/testoplock
 #
