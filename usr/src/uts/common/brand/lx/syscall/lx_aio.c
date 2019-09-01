@@ -10,7 +10,7 @@
  */
 
 /*
- * Copyright 2017 Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 /*
@@ -248,7 +248,7 @@ lx_io_cp_hold(lx_aio_context_t cid)
 
 	if (lxpd->l_io_ctxs == NULL) {
 		ASSERT(lxpd->l_io_ctx_cnt == 0);
-		ASSERT(lxpd->l_io_ctxpage == NULL);
+		ASSERT(lxpd->l_io_ctxpage == (uintptr_t)NULL);
 		goto bad;
 	}
 
@@ -601,7 +601,7 @@ lx_io_setup(uint_t nr_events, void *ctxp)
 		return (set_errno(EFAULT));
 
 	/* The cid in user-land must be NULL to start */
-	if (cid != NULL || nr_events > LX_AIO_MAX_NR)
+	if (cid != (uintptr_t)NULL || nr_events > LX_AIO_MAX_NR)
 		return (set_errno(EINVAL));
 
 	mutex_enter(&lxzd->lxzd_lock);
@@ -622,7 +622,7 @@ lx_io_setup(uint_t nr_events, void *ctxp)
 		uintptr_t ctxpage;
 
 		ASSERT(lxpd->l_io_ctx_cnt == 0);
-		ASSERT(lxpd->l_io_ctxpage == NULL);
+		ASSERT(lxpd->l_io_ctxpage == (uintptr_t)NULL);
 
 		ttolwp(curthread)->lwp_errno = 0;
 		ctxpage = (uintptr_t)smmap64(0, PAGESIZE, PROT_READ,
@@ -1308,7 +1308,7 @@ lx_io_clear(lx_proc_data_t *cpd)
 {
 	cpd->l_io_ctxs = NULL;
 	cpd->l_io_ctx_cnt = 0;
-	cpd->l_io_ctxpage = NULL;
+	cpd->l_io_ctxpage = (uintptr_t)NULL;
 }
 
 /*

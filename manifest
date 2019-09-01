@@ -518,6 +518,7 @@ f etc/security/device_policy 0644 root sys
 f etc/security/exec_attr 0644 root sys
 d etc/security/exec_attr.d 0755 root sys
 f etc/security/exec_attr.d/SUNWcs 0644 root sys
+f etc/security/exec_attr.d/SUNWsmbfs 0644 root sys
 f etc/security/extra_privs 0644 root sys
 f etc/security/kmfpolicy.xml 0644 root bin
 d etc/security/lib 0755 root sys
@@ -1064,6 +1065,7 @@ f kernel/misc/amd64/ac97 0755 root sys
 f kernel/misc/amd64/acpica 0755 root sys
 f kernel/misc/amd64/bignum 0755 root sys
 f kernel/misc/amd64/bootdev 0755 root sys
+f kernel/misc/amd64/buildversion 0755 root sys
 f kernel/misc/amd64/busra 0755 root sys
 f kernel/misc/amd64/cc 0755 root sys
 f kernel/misc/amd64/cmlb 0755 root sys
@@ -5898,9 +5900,9 @@ s usr/lib/fs/smbfs/amd64/libshare_smbfs.so=libshare_smbfs.so.1
 f usr/lib/fs/smbfs/dfshares 0555 root bin
 f usr/lib/fs/smbfs/libshare_smbfs.so.1 0755 root sys
 s usr/lib/fs/smbfs/libshare_smbfs.so=libshare_smbfs.so.1
-f usr/lib/fs/smbfs/mount 4555 root bin
+f usr/lib/fs/smbfs/mount 0555 root bin
 f usr/lib/fs/smbfs/share 0555 root bin
-f usr/lib/fs/smbfs/umount 4555 root bin
+f usr/lib/fs/smbfs/umount 0555 root bin
 f usr/lib/fs/smbfs/unshare 0555 root bin
 d usr/lib/fs/tmpfs 0755 root sys
 f usr/lib/fs/tmpfs/mount 0555 root bin
@@ -16455,6 +16457,8 @@ f usr/share/man/man3m/lround.3m 0444 root bin
 f usr/share/man/man3m/matherr.3m 0444 root bin
 f usr/share/man/man3m/modf.3m 0444 root bin
 f usr/share/man/man3m/nan.3m 0444 root bin
+s usr/share/man/man3m/nanf.3m=nan.3m
+s usr/share/man/man3m/nanl.3m=nan.3m
 f usr/share/man/man3m/nearbyint.3m 0444 root bin
 f usr/share/man/man3m/nextafter.3m 0444 root bin
 f usr/share/man/man3m/pow.3m 0444 root bin

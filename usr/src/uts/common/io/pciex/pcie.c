@@ -786,6 +786,13 @@ pcie_init_pfd(dev_info_t *dip)
 				    PCIE_ZALLOC(pf_pcix_ecc_regs_t);
 			}
 		}
+
+		PCIE_SLOT_REG(pfd_p) = PCIE_ZALLOC(pf_pcie_slot_regs_t);
+		PCIE_SLOT_REG(pfd_p)->pcie_slot_regs_valid = B_FALSE;
+		PCIE_SLOT_REG(pfd_p)->pcie_slot_cap = 0;
+		PCIE_SLOT_REG(pfd_p)->pcie_slot_control = 0;
+		PCIE_SLOT_REG(pfd_p)->pcie_slot_status = 0;
+
 	} else if (PCIE_IS_PCIX(bus_p)) {
 		if (PCIE_IS_BDG(bus_p)) {
 			PCIX_BDG_ERR_REG(pfd_p) =
@@ -3029,11 +3036,6 @@ pcie_link_bw_intr(dev_info_t *dip)
 	pcie_bus_t *bus_p = PCIE_DIP2BUS(dip);
 	uint16_t linksts;
 	uint16_t flags = PCIE_LINKSTS_LINK_BW_MGMT | PCIE_LINKSTS_AUTO_BW;
-	dev_info_t *cdip;
-	sysevent_t *se = NULL;
-	sysevent_value_t se_val;
-	sysevent_id_t eid;
-	sysevent_attr_list_t *ev_attr_list = NULL;
 
 	if ((bus_p->bus_lbw_state & PCIE_LBW_S_ENABLED) == 0) {
 		return (DDI_INTR_UNCLAIMED);
