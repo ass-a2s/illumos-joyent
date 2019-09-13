@@ -563,6 +563,8 @@ f etc/user_attr 0644 root sys
 d etc/user_attr.d 0755 root sys
 f etc/user_attr.d/SUNWcs 0644 root sys
 s etc/utmpx=../var/adm/utmpx
+d etc/versions 0755 root sys
+f etc/versions/build 0644 root other
 f etc/vfstab 0644 root sys
 s etc/wtmpx=../var/adm/wtmpx
 d etc/xdg 0755 root sys
@@ -1065,7 +1067,6 @@ f kernel/misc/amd64/ac97 0755 root sys
 f kernel/misc/amd64/acpica 0755 root sys
 f kernel/misc/amd64/bignum 0755 root sys
 f kernel/misc/amd64/bootdev 0755 root sys
-f kernel/misc/amd64/buildversion 0755 root sys
 f kernel/misc/amd64/busra 0755 root sys
 f kernel/misc/amd64/cc 0755 root sys
 f kernel/misc/amd64/cmlb 0755 root sys
@@ -4342,6 +4343,7 @@ f usr/include/sys/libc_kernel.h 0644 root bin
 f usr/include/sys/libdevid.h 0644 root bin
 f usr/include/sys/limits.h 0644 root bin
 f usr/include/sys/link.h 0644 root bin
+f usr/include/sys/linker_set.h 0644 root bin
 f usr/include/sys/list.h 0644 root bin
 f usr/include/sys/list_impl.h 0644 root bin
 f usr/include/sys/llc1.h 0644 root bin
@@ -7000,6 +7002,14 @@ d usr/lib/locale/C/LC_MONETARY 0755 root bin
 d usr/lib/locale/C/LC_NUMERIC 0755 root bin
 d usr/lib/locale/C/LC_TIME 0755 root bin
 f usr/lib/locale/C/LC_TIME/SUNW_OST_OSCMD.po 0644 root bin
+d usr/lib/locale/C.UTF-8 0755 root bin
+d usr/lib/locale/C.UTF-8/LC_COLLATE 0755 root bin
+d usr/lib/locale/C.UTF-8/LC_CTYPE 0755 root bin
+f usr/lib/locale/C.UTF-8/LC_CTYPE/LCL_DATA 0444 root bin
+d usr/lib/locale/C.UTF-8/LC_MESSAGES 0755 root bin
+d usr/lib/locale/C.UTF-8/LC_MONETARY 0755 root bin
+d usr/lib/locale/C.UTF-8/LC_NUMERIC 0755 root bin
+d usr/lib/locale/C.UTF-8/LC_TIME 0755 root bin
 s usr/lib/locale/POSIX=C
 d usr/lib/locale/af_ZA.UTF-8 0755 root bin
 d usr/lib/locale/af_ZA.UTF-8/LC_COLLATE 0755 root bin

@@ -98,6 +98,7 @@ dir path=opt/zfs-tests/tests/functional/cli_root/zpool_scrub
 dir path=opt/zfs-tests/tests/functional/cli_root/zpool_set
 dir path=opt/zfs-tests/tests/functional/cli_root/zpool_status
 dir path=opt/zfs-tests/tests/functional/cli_root/zpool_sync
+dir path=opt/zfs-tests/tests/functional/cli_root/zpool_trim
 dir path=opt/zfs-tests/tests/functional/cli_root/zpool_upgrade
 dir path=opt/zfs-tests/tests/functional/cli_root/zpool_upgrade/blockfiles
 dir path=opt/zfs-tests/tests/functional/cli_user
@@ -154,6 +155,7 @@ dir path=opt/zfs-tests/tests/functional/snapshot
 dir path=opt/zfs-tests/tests/functional/snapused
 dir path=opt/zfs-tests/tests/functional/sparse
 dir path=opt/zfs-tests/tests/functional/threadsappend
+dir path=opt/zfs-tests/tests/functional/trim
 dir path=opt/zfs-tests/tests/functional/truncate
 dir path=opt/zfs-tests/tests/functional/upgrade
 dir path=opt/zfs-tests/tests/functional/userquota
@@ -183,6 +185,7 @@ file path=opt/zfs-tests/bin/file_check mode=0555
 file path=opt/zfs-tests/bin/file_trunc mode=0555
 file path=opt/zfs-tests/bin/file_write mode=0555
 file path=opt/zfs-tests/bin/getholes mode=0555
+file path=opt/zfs-tests/bin/has_unmap mode=0555
 file path=opt/zfs-tests/bin/largest_file mode=0555
 file path=opt/zfs-tests/bin/memory_balloon mode=0555
 file path=opt/zfs-tests/bin/mkbusy mode=0555
@@ -1450,8 +1453,12 @@ file path=opt/zfs-tests/tests/functional/cli_root/zpool/zpool_002_pos \
     mode=0555
 file path=opt/zfs-tests/tests/functional/cli_root/zpool/zpool_003_pos \
     mode=0555
+file path=opt/zfs-tests/tests/functional/cli_root/zpool_add/add-o_ashift \
+    mode=0555
 file \
     path=opt/zfs-tests/tests/functional/cli_root/zpool_add/add_nested_replacing_spare \
+    mode=0555
+file path=opt/zfs-tests/tests/functional/cli_root/zpool_add/add_prop_ashift \
     mode=0555
 file path=opt/zfs-tests/tests/functional/cli_root/zpool_add/cleanup mode=0555
 file path=opt/zfs-tests/tests/functional/cli_root/zpool_add/setup mode=0555
@@ -1479,6 +1486,8 @@ file path=opt/zfs-tests/tests/functional/cli_root/zpool_add/zpool_add_009_neg \
     mode=0555
 file path=opt/zfs-tests/tests/functional/cli_root/zpool_add/zpool_add_010_pos \
     mode=0555
+file path=opt/zfs-tests/tests/functional/cli_root/zpool_attach/attach-o_ashift \
+    mode=0555
 file path=opt/zfs-tests/tests/functional/cli_root/zpool_attach/cleanup \
     mode=0555
 file path=opt/zfs-tests/tests/functional/cli_root/zpool_attach/setup mode=0555
@@ -1503,6 +1512,8 @@ file \
     path=opt/zfs-tests/tests/functional/cli_root/zpool_clear/zpool_clear_readonly \
     mode=0555
 file path=opt/zfs-tests/tests/functional/cli_root/zpool_create/cleanup \
+    mode=0555
+file path=opt/zfs-tests/tests/functional/cli_root/zpool_create/create-o_ashift \
     mode=0555
 file path=opt/zfs-tests/tests/functional/cli_root/zpool_create/setup mode=0555
 file \
@@ -1909,6 +1920,12 @@ file \
     mode=0555
 file path=opt/zfs-tests/tests/functional/cli_root/zpool_replace/cleanup \
     mode=0555
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_replace/replace-o_ashift \
+    mode=0555
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_replace/replace_prop_ashift \
+    mode=0555
 file path=opt/zfs-tests/tests/functional/cli_root/zpool_replace/setup \
     mode=0555
 file \
@@ -1965,6 +1982,8 @@ file path=opt/zfs-tests/tests/functional/cli_root/zpool_set/zpool_set_002_neg \
     mode=0555
 file path=opt/zfs-tests/tests/functional/cli_root/zpool_set/zpool_set_003_neg \
     mode=0555
+file path=opt/zfs-tests/tests/functional/cli_root/zpool_set/zpool_set_ashift \
+    mode=0555
 file path=opt/zfs-tests/tests/functional/cli_root/zpool_status/cleanup \
     mode=0555
 file path=opt/zfs-tests/tests/functional/cli_root/zpool_status/setup mode=0555
@@ -1981,6 +2000,57 @@ file \
     mode=0555
 file \
     path=opt/zfs-tests/tests/functional/cli_root/zpool_sync/zpool_sync_002_neg \
+    mode=0555
+file path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/cleanup mode=0555
+file path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/setup mode=0555
+file path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim.kshlib \
+    mode=0444
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_attach_detach_add_remove \
+    mode=0555
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_import_export \
+    mode=0555
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_multiple \
+    mode=0555
+file path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_neg \
+    mode=0555
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_offline_export_import_online \
+    mode=0555
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_online_offline \
+    mode=0555
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_partial \
+    mode=0555
+file path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_rate \
+    mode=0555
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_rate_neg \
+    mode=0555
+file path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_secure \
+    mode=0555
+file path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_split \
+    mode=0555
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_start_and_cancel_neg \
+    mode=0555
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_start_and_cancel_pos \
+    mode=0555
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_suspend_resume \
+    mode=0555
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_unsupported_vdevs \
+    mode=0555
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_verify_checksums \
+    mode=0555
+file \
+    path=opt/zfs-tests/tests/functional/cli_root/zpool_trim/zpool_trim_verify_trimmed \
     mode=0555
 file \
     path=opt/zfs-tests/tests/functional/cli_root/zpool_upgrade/blockfiles/zfs-broken-mirror1.dat.bz2 \
@@ -2962,6 +3032,16 @@ file path=opt/zfs-tests/tests/functional/threadsappend/setup mode=0555
 file path=opt/zfs-tests/tests/functional/threadsappend/threadsappend mode=0555
 file path=opt/zfs-tests/tests/functional/threadsappend/threadsappend_001_pos \
     mode=0555
+file path=opt/zfs-tests/tests/functional/trim/autotrim_config mode=0555
+file path=opt/zfs-tests/tests/functional/trim/autotrim_integrity mode=0555
+file path=opt/zfs-tests/tests/functional/trim/autotrim_trim_integrity \
+    mode=0555
+file path=opt/zfs-tests/tests/functional/trim/cleanup mode=0555
+file path=opt/zfs-tests/tests/functional/trim/setup mode=0555
+file path=opt/zfs-tests/tests/functional/trim/trim.cfg mode=0444
+file path=opt/zfs-tests/tests/functional/trim/trim.kshlib mode=0444
+file path=opt/zfs-tests/tests/functional/trim/trim_config mode=0555
+file path=opt/zfs-tests/tests/functional/trim/trim_integrity mode=0555
 file path=opt/zfs-tests/tests/functional/truncate/cleanup mode=0555
 file path=opt/zfs-tests/tests/functional/truncate/setup mode=0555
 file path=opt/zfs-tests/tests/functional/truncate/truncate.cfg mode=0444
@@ -2972,6 +3052,8 @@ file path=opt/zfs-tests/tests/functional/upgrade/setup mode=0555
 file path=opt/zfs-tests/tests/functional/upgrade/upgrade_common.kshlib \
     mode=0444
 file path=opt/zfs-tests/tests/functional/upgrade/upgrade_projectquota_001_pos \
+    mode=0555
+file path=opt/zfs-tests/tests/functional/upgrade/upgrade_readonly_pool \
     mode=0555
 file path=opt/zfs-tests/tests/functional/upgrade/upgrade_userobj_001_pos \
     mode=0555

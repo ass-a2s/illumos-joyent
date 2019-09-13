@@ -26,8 +26,9 @@
 .\" Copyright (c) 2017 Datto Inc.
 .\" Copyright (c) 2017 George Melikov. All Rights Reserved.
 .\" Copyright 2019 Joyent, Inc.
+.\" Copyright (c) 2012 Cyril Plisko. All Rights Reserved.
 .\"
-.Dd May 15, 2019
+.Dd August 30, 2019
 .Dt ZPOOL 1M
 .Os
 .Sh NAME
@@ -39,10 +40,12 @@
 .Nm
 .Cm add
 .Op Fl fgLnP
+.Oo Fl o Ar property Ns = Ns Ar value Oc
 .Ar pool vdev Ns ...
 .Nm
 .Cm attach
 .Op Fl f
+.Oo Fl o Ar property Ns = Ns Ar value Oc
 .Ar pool device new_device
 .Nm
 .Cm checkpoint
@@ -109,7 +112,7 @@
 .Op Ar newpool
 .Nm
 .Cm initialize
-.Op Fl cs
+.Op Fl c | Fl s
 .Ar pool
 .Op Ar device Ns ...
 .Nm
@@ -164,6 +167,13 @@
 .Op Fl s | Fl p
 .Ar pool Ns ...
 .Nm
+.Cm trim
+.Op Fl d
+.Op Fl r Ar rate
+.Op Fl c | Fl s
+.Ar pool
+.Op Ar device Ns ...
+.Nm
 .Cm set
 .Ar property Ns = Ns Ar value
 .Ar pool
@@ -175,7 +185,7 @@
 .Ar pool newpool
 .Nm
 .Cm status
-.Op Fl DgLPvx
+.Op Fl DigLPtvx
 .Op Fl T Sy u Ns | Ns Sy d
 .Oo Ar pool Oc Ns ...
 .Op Ar interval Op Ar count
@@ -668,6 +678,31 @@ changed with the
 .Nm zpool Cm set
 command:
 .Bl -tag -width Ds
+.It Sy ashift Ns = Ns Sy ashift
+Pool sector size exponent, to the power of
+.Sy 2
+(internally referred to as
+.Sy ashift
+). Values from 9 to 16, inclusive, are valid; also, the
+value 0 (the default) means to auto-detect using the kernel's block
+layer and a ZFS internal exception list.
+I/O operations will be aligned to the specified size boundaries.
+Additionally, the minimum (disk) write size will be set to the specified size,
+so this represents a space vs performance trade-off.
+For optimal performance, the pool sector size should be greater than or equal to
+the sector size of the underlying disks.
+The typical case for setting this property is when performance is important and
+the underlying disks use 4KiB sectors but report 512B sectors to the OS (for
+compatibility reasons); in that case, set
+.Sy ashift=12
+(which is 1<<12 = 4096). When set, this property is
+used as the default hint value in subsequent vdev operations (add,
+attach and replace).
+Changing this value will not modify any existing
+vdev, not even on disk replacement; however it can be used, for
+instance, to replace a dying 512B sectors disk with a newer 4KiB
+sectors device: this will probably result in bad performance but at the
+same time could prevent loss of data.
 .It Sy autoexpand Ns = Ns Sy on Ns | Ns Sy off
 Controls automatic pool expansion when the underlying LUN is grown.
 If set to
@@ -762,6 +797,30 @@ Any write requests that have yet to be committed to disk would be blocked.
 .It Sy panic
 Prints out a message to the console and generates a system crash dump.
 .El
+.It Sy autotrim Ns = Ns Sy on Ns | Ns Sy off
+When set to
+.Sy on
+space which has been recently freed, and is no longer allocated by the pool,
+will be periodically trimmed.
+This allows block device vdevs which support BLKDISCARD, such as SSDs, or
+file vdevs on which the underlying file system supports hole-punching, to
+reclaim unused blocks.
+The default setting for this property is
+.Sy off .
+.Pp
+Automatic TRIM does not immediately reclaim blocks after a free.
+Instead, it will optimistically delay allowing smaller ranges to be
+aggregated in to a few larger ones.
+These can then be issued more efficiently to the storage.
+.Pp
+Be aware that automatic trimming of recently freed data blocks can put
+significant stress on the underlying storage devices.
+This will vary depending of how well the specific device handles these commands.
+For lower end devices it is often possible to achieve most of the benefits
+of automatic trimming by running an on-demand (manual) TRIM periodically
+using the
+.Nm zpool Cm trim
+command.
 .It Sy feature@ Ns Ar feature_name Ns = Ns Sy enabled
 The value of this property is the current state of
 .Ar feature_name .
@@ -838,6 +897,7 @@ Displays a help message.
 .Nm
 .Cm add
 .Op Fl fgLnP
+.Oo Fl o Ar property Ns = Ns Ar value Oc
 .Ar pool vdev Ns ...
 .Xc
 Adds the specified virtual devices to the given pool.
@@ -881,11 +941,19 @@ instead of only the last component of the path.
 This can be used in conjunction with the
 .Fl L
 flag.
+.It Fl o Ar property Ns = Ns Ar value
+Sets the given pool properties.
+See the
+.Sx Properties
+section for a list of valid properties that can be set.
+The only property supported at the moment is
+.Sy ashift.
 .El
 .It Xo
 .Nm
 .Cm attach
 .Op Fl f
+.Oo Fl o Ar property Ns = Ns Ar value Oc
 .Ar pool device new_device
 .Xc
 Attaches
@@ -915,6 +983,13 @@ Forces use of
 .Ar new_device ,
 even if its appears to be in use.
 Not all devices can be overridden in this manner.
+.It Fl o Ar property Ns = Ns Ar value
+Sets the given pool properties.
+See the
+.Sx Properties
+section for a list of valid properties that can be set.
+The only property supported at the moment is
+.Sy ashift.
 .El
 .It Xo
 .Nm
@@ -1506,7 +1581,7 @@ to fully rewind.
 .It Xo
 .Nm
 .Cm initialize
-.Op Fl cs
+.Op Fl c | Fl s
 .Ar pool
 .Op Ar device Ns ...
 .Xc
@@ -1564,6 +1639,8 @@ Specify
 for standard date format.
 See
 .Xr date 1 .
+.It Fl i
+Display vdev initialization status.
 .It Fl g
 Display vdev GUIDs instead of the normal device names.
 These GUIDs can be used in place of device names for the zpool
@@ -1945,7 +2022,7 @@ and automatically import it.
 .It Xo
 .Nm
 .Cm status
-.Op Fl DgLPvx
+.Op Fl DigLPtvx
 .Op Fl T Sy u Ns | Ns Sy d
 .Oo Ar pool Oc Ns ...
 .Op Ar interval Op Ar count
@@ -1984,6 +2061,8 @@ the path.
 This can be used in conjunction with the
 .Fl L
 flag.
+.It Fl t
+Display vdev TRIM status.
 .It Fl T Sy u Ns | Ns Sy d
 Display a time stamp.
 Specify
@@ -2017,6 +2096,52 @@ Without arguments,
 will sync all pools on the system.
 Otherwise, it will only sync the specified
 .Ar pool .
+.It Xo
+.Nm
+.Cm trim
+.Op Fl d
+.Op Fl r Ar rate
+.Op Fl c | Fl s
+.Ar pool
+.Op Ar device Ns ...
+.Xc
+Initiates an immediate on-demand TRIM operation for all of the free space in
+a pool.
+This operation informs the underlying storage devices of all blocks
+in the pool which are no longer allocated and allows thinly provisioned
+devices to reclaim the space.
+.Pp
+A manual on-demand TRIM operation can be initiated irrespective of the
+.Sy autotrim
+pool property setting.
+See the documentation for the
+.Sy autotrim
+property above for the types of vdev devices which can be trimmed.
+.Bl -tag -width Ds
+.It Fl d -secure
+Causes a secure TRIM to be initiated.
+When performing a secure TRIM, the device guarantees that data stored on the
+trimmed blocks has been erased.
+This requires support from the device and is not supported by all SSDs.
+.It Fl r -rate Ar rate
+Controls the rate at which the TRIM operation progresses.
+Without this option TRIM is executed as quickly as possible.
+The rate, expressed in bytes per second, is applied on a per-vdev basis and
+may be set differently for each leaf vdev.
+.It Fl c, -cancel
+Cancel trimming on the specified devices, or all eligible devices if none
+are specified.
+If one or more target devices are invalid or are not currently being
+trimmed, the command will fail and no cancellation will occur on any device.
+.It Fl s -suspend
+Suspend trimming on the specified devices, or all eligible devices if none
+are specified.
+If one or more target devices are invalid or are not currently being
+trimmed, the command will fail and no suspension will occur on any device.
+Trimming can then be resumed by running
+.Nm zpool Cm trim
+with no flags on the relevant target devices.
+.El
 .It Xo
 .Nm
 .Cm upgrade

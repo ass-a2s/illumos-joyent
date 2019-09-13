@@ -51,6 +51,7 @@
 #include <sys/dsl_scan.h>
 #include <sys/abd.h>
 #include <sys/vdev_initialize.h>
+#include <sys/vdev_trim.h>
 
 /*
  * Virtual device management.
@@ -497,7 +498,9 @@ vdev_alloc_common(spa_t *spa, uint_t id, uint64_t guid, vdev_ops_t *ops)
 	mutex_init(&vd->vdev_obsolete_lock, NULL, MUTEX_DEFAULT, NULL);
 	vd->vdev_obsolete_segments = range_tree_create(NULL, NULL);
 
+	list_link_init(&vd->vdev_initialize_node);
 	list_link_init(&vd->vdev_leaf_node);
+	list_link_init(&vd->vdev_trim_node);
 	mutex_init(&vd->vdev_dtl_lock, NULL, MUTEX_DEFAULT, NULL);
 	mutex_init(&vd->vdev_stat_lock, NULL, MUTEX_DEFAULT, NULL);
 	mutex_init(&vd->vdev_probe_lock, NULL, MUTEX_DEFAULT, NULL);
@@ -506,6 +509,12 @@ vdev_alloc_common(spa_t *spa, uint_t id, uint64_t guid, vdev_ops_t *ops)
 	mutex_init(&vd->vdev_initialize_io_lock, NULL, MUTEX_DEFAULT, NULL);
 	cv_init(&vd->vdev_initialize_cv, NULL, CV_DEFAULT, NULL);
 	cv_init(&vd->vdev_initialize_io_cv, NULL, CV_DEFAULT, NULL);
+	mutex_init(&vd->vdev_trim_lock, NULL, MUTEX_DEFAULT, NULL);
+	mutex_init(&vd->vdev_autotrim_lock, NULL, MUTEX_DEFAULT, NULL);
+	mutex_init(&vd->vdev_trim_io_lock, NULL, MUTEX_DEFAULT, NULL);
+	cv_init(&vd->vdev_trim_cv, NULL, CV_DEFAULT, NULL);
+	cv_init(&vd->vdev_autotrim_cv, NULL, CV_DEFAULT, NULL);
+	cv_init(&vd->vdev_trim_io_cv, NULL, CV_DEFAULT, NULL);
 
 	for (int t = 0; t < DTL_TYPES; t++) {
 		vd->vdev_dtl[t] = range_tree_create(NULL, NULL);
@@ -804,7 +813,10 @@ void
 vdev_free(vdev_t *vd)
 {
 	spa_t *spa = vd->vdev_spa;
+
 	ASSERT3P(vd->vdev_initialize_thread, ==, NULL);
+	ASSERT3P(vd->vdev_trim_thread, ==, NULL);
+	ASSERT3P(vd->vdev_autotrim_thread, ==, NULL);
 
 	/*
 	 * Scan queues are normally destroyed at the end of a scan. If the
@@ -835,7 +847,6 @@ vdev_free(vdev_t *vd)
 
 	ASSERT(vd->vdev_child == NULL);
 	ASSERT(vd->vdev_guid_sum == vd->vdev_guid);
-	ASSERT(vd->vdev_initialize_thread == NULL);
 
 	/*
 	 * Discard allocation state.
@@ -913,6 +924,12 @@ vdev_free(vdev_t *vd)
 	mutex_destroy(&vd->vdev_initialize_io_lock);
 	cv_destroy(&vd->vdev_initialize_io_cv);
 	cv_destroy(&vd->vdev_initialize_cv);
+	mutex_destroy(&vd->vdev_trim_lock);
+	mutex_destroy(&vd->vdev_autotrim_lock);
+	mutex_destroy(&vd->vdev_trim_io_lock);
+	cv_destroy(&vd->vdev_trim_cv);
+	cv_destroy(&vd->vdev_autotrim_cv);
+	cv_destroy(&vd->vdev_trim_io_cv);
 
 	if (vd == spa->spa_root_vdev)
 		spa->spa_root_vdev = NULL;
@@ -1662,25 +1679,31 @@ vdev_open(vdev_t *vd)
 	if (vd->vdev_asize == 0) {
 		/*
 		 * This is the first-ever open, so use the computed values.
-		 * For testing purposes, a higher ashift can be requested.
+		 * For compatibility, a different ashift can be requested.
 		 */
 		vd->vdev_asize = asize;
 		vd->vdev_max_asize = max_asize;
-		vd->vdev_ashift = MAX(ashift, vd->vdev_ashift);
-		vd->vdev_ashift = MAX(zfs_ashift_min, vd->vdev_ashift);
+		if (vd->vdev_ashift == 0) {
+			vd->vdev_ashift = ashift; /* use detected value */
+		}
+		if (vd->vdev_ashift != 0 && (vd->vdev_ashift < ASHIFT_MIN ||
+		    vd->vdev_ashift > ASHIFT_MAX)) {
+			vdev_set_state(vd, B_TRUE, VDEV_STATE_CANT_OPEN,
+			    VDEV_AUX_BAD_ASHIFT);
+			return (SET_ERROR(EDOM));
+		}
 	} else {
 		/*
 		 * Detect if the alignment requirement has increased.
 		 * We don't want to make the pool unavailable, just
-		 * issue a warning instead.
+		 * post an event instead.
 		 */
 		if (ashift > vd->vdev_top->vdev_ashift &&
 		    vd->vdev_ops->vdev_op_leaf) {
-			cmn_err(CE_WARN,
-			    "Disk, '%s', has a block alignment that is "
-			    "larger than the pool's alignment\n",
-			    vd->vdev_path);
+			zfs_ereport_post(FM_EREPORT_ZFS_DEVICE_BAD_ASHIFT,
+			    spa, vd, NULL, NULL, 0, 0);
 		}
+
 		vd->vdev_max_asize = max_asize;
 	}
 
@@ -3307,6 +3330,16 @@ vdev_online(spa_t *spa, uint64_t guid, uint64_t flags, vdev_state_t *newstate)
 	}
 	mutex_exit(&vd->vdev_initialize_lock);
 
+	/* Restart trimming if necessary */
+	mutex_enter(&vd->vdev_trim_lock);
+	if (vdev_writeable(vd) &&
+	    vd->vdev_trim_thread == NULL &&
+	    vd->vdev_trim_state == VDEV_TRIM_ACTIVE) {
+		(void) vdev_trim(vd, vd->vdev_trim_rate, vd->vdev_trim_partial,
+		    vd->vdev_trim_secure);
+	}
+	mutex_exit(&vd->vdev_trim_lock);
+
 	if (wasoffline ||
 	    (oldstate < VDEV_STATE_DEGRADED &&
 	    vd->vdev_state >= VDEV_STATE_DEGRADED))
@@ -3621,6 +3654,18 @@ vdev_get_stats(vdev_t *vd, vdev_stat_t *vs)
 		vs->vs_initialize_state = vd->vdev_initialize_state;
 		vs->vs_initialize_action_time = vd->vdev_initialize_action_time;
 	}
+
+	/*
+	 * Report manual TRIM progress. Since we don't have
+	 * the manual TRIM locks held, this is only an
+	 * estimate (although fairly accurate one).
+	 */
+	vs->vs_trim_notsup = !vd->vdev_has_trim;
+	vs->vs_trim_bytes_done = vd->vdev_trim_bytes_done;
+	vs->vs_trim_bytes_est = vd->vdev_trim_bytes_est;
+	vs->vs_trim_state = vd->vdev_trim_state;
+	vs->vs_trim_action_time = vd->vdev_trim_action_time;
+
 	/*
 	 * Report expandable space on top-level, non-auxillary devices only.
 	 * The expandable space is reported in terms of metaslab sized units
@@ -3647,7 +3692,7 @@ vdev_get_stats(vdev_t *vd, vdev_stat_t *vs)
 			vdev_t *cvd = rvd->vdev_child[c];
 			vdev_stat_t *cvs = &cvd->vdev_stat;
 
-			for (int t = 0; t < ZIO_TYPES; t++) {
+			for (int t = 0; t < VS_ZIO_TYPES; t++) {
 				vs->vs_ops[t] += cvs->vs_ops[t];
 				vs->vs_bytes[t] += cvs->vs_bytes[t];
 			}
@@ -3739,8 +3784,18 @@ vdev_stat_update(zio_t *zio, uint64_t psize)
 				vs->vs_self_healed += psize;
 		}
 
-		vs->vs_ops[type]++;
-		vs->vs_bytes[type] += psize;
+		zio_type_t vs_type = type;
+
+		/*
+		 * TRIM ops and bytes are reported to user space as
+		 * ZIO_TYPE_IOCTL.  This is done to preserve the
+		 * vdev_stat_t structure layout for user space.
+		 */
+		if (type == ZIO_TYPE_TRIM)
+			vs_type = ZIO_TYPE_IOCTL;
+
+		vs->vs_ops[vs_type]++;
+		vs->vs_bytes[vs_type] += psize;
 
 		mutex_exit(&vd->vdev_stat_lock);
 		return;
@@ -3831,7 +3886,8 @@ vdev_deflated_space(vdev_t *vd, int64_t space)
 }
 
 /*
- * Update the in-core space usage stats for this vdev and the root vdev.
+ * Update the in-core space usage stats for this vdev, its metaslab class,
+ * and the root vdev.
  */
 void
 vdev_space_update(vdev_t *vd, int64_t alloc_delta, int64_t defer_delta,
@@ -4186,6 +4242,9 @@ vdev_set_state(vdev_t *vd, boolean_t isopen, vdev_state_t state, vdev_aux_t aux)
 			case VDEV_AUX_BAD_LABEL:
 				class = FM_EREPORT_ZFS_DEVICE_BAD_LABEL;
 				break;
+			case VDEV_AUX_BAD_ASHIFT:
+				class = FM_EREPORT_ZFS_DEVICE_BAD_ASHIFT;
+				break;
 			default:
 				class = FM_EREPORT_ZFS_DEVICE_UNKNOWN;
 			}
@@ -4377,4 +4436,47 @@ vdev_set_deferred_resilver(spa_t *spa, vdev_t *vd)
 
 	vd->vdev_resilver_deferred = B_TRUE;
 	spa->spa_resilver_deferred = B_TRUE;
+}
+
+/*
+ * Translate a logical range to the physical range for the specified vdev_t.
+ * This function is initially called with a leaf vdev and will walk each
+ * parent vdev until it reaches a top-level vdev. Once the top-level is
+ * reached the physical range is initialized and the recursive function
+ * begins to unwind. As it unwinds it calls the parent's vdev specific
+ * translation function to do the real conversion.
+ */
+void
+vdev_xlate(vdev_t *vd, const range_seg_t *logical_rs, range_seg_t *physical_rs)
+{
+	/*
+	 * Walk up the vdev tree
+	 */
+	if (vd != vd->vdev_top) {
+		vdev_xlate(vd->vdev_parent, logical_rs, physical_rs);
+	} else {
+		/*
+		 * We've reached the top-level vdev, initialize the
+		 * physical range to the logical range and start to
+		 * unwind.
+		 */
+		physical_rs->rs_start = logical_rs->rs_start;
+		physical_rs->rs_end = logical_rs->rs_end;
+		return;
+	}
+
+	vdev_t *pvd = vd->vdev_parent;
+	ASSERT3P(pvd, !=, NULL);
+	ASSERT3P(pvd->vdev_ops->vdev_op_xlate, !=, NULL);
+
+	/*
+	 * As this recursive function unwinds, translate the logical
+	 * range into its physical components by calling the
+	 * vdev specific translate function.
+	 */
+	range_seg_t intermediate = { { { 0, 0 } } };
+	pvd->vdev_ops->vdev_op_xlate(vd, physical_rs, &intermediate);
+
+	physical_rs->rs_start = intermediate.rs_start;
+	physical_rs->rs_end = intermediate.rs_end;
 }

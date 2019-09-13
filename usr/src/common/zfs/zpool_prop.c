@@ -111,6 +111,8 @@ zpool_prop_init(void)
 	    PROP_DEFAULT, ZFS_TYPE_POOL, "<version>", "VERSION");
 	zprop_register_number(ZPOOL_PROP_DEDUPDITTO, "dedupditto", 0,
 	    PROP_DEFAULT, ZFS_TYPE_POOL, "<threshold (min 100)>", "DEDUPDITTO");
+	zprop_register_number(ZPOOL_PROP_ASHIFT, "ashift", 0, PROP_DEFAULT,
+	    ZFS_TYPE_POOL, "<ashift, 9-16, or 0=default>", "ASHIFT");
 
 	/* default index (boolean) properties */
 	zprop_register_index(ZPOOL_PROP_DELEGATION, "delegation", 1,
@@ -133,6 +135,9 @@ zpool_prop_init(void)
 	zprop_register_index(ZPOOL_PROP_FAILUREMODE, "failmode",
 	    ZIO_FAILURE_MODE_WAIT, PROP_DEFAULT, ZFS_TYPE_POOL,
 	    "wait | continue | panic", "FAILMODE", failuremode_table);
+	zprop_register_index(ZPOOL_PROP_AUTOTRIM, "autotrim",
+	    SPA_AUTOTRIM_OFF, PROP_DEFAULT, ZFS_TYPE_POOL,
+	    "on | off", "AUTOTRIM", boolean_table);
 
 	/* hidden properties */
 	zprop_register_hidden(ZPOOL_PROP_NAME, "name", PROP_TYPE_STRING,

@@ -83,10 +83,11 @@
 #include <sys/socketvar.h>
 #include <fs/sockfs/socktpi.h>
 #include <sys/random.h>
+#include <sys/procfs.h>
 
 /* Dependent on procfs */
 extern kthread_t *prchoose(proc_t *);
-extern int prreadargv(proc_t *, char *, size_t, size_t *);
+extern int prreadcmdline(proc_t *, char *, size_t, size_t *);
 extern int prreadenvv(proc_t *, char *, size_t, size_t *);
 extern int prreadbuf(proc_t *, uintptr_t, uint8_t *, size_t, size_t *);
 
@@ -332,10 +333,9 @@ extern swrand_stats_t swrand_stats;
 #define	FOURGB	4294967295ULL
 
 /*
- * The maximum length of the concatenation of argument vector strings we
- * will return to the user via the branded procfs. Likewise for the env vector.
+ * The maximum length of the concatenation of env vector strings we
+ * will return to the user via the branded procfs.
  */
-int lxpr_maxargvlen = 4096;
 int lxpr_maxenvvlen = 4096;
 
 /*
@@ -810,7 +810,7 @@ lxpr_close(vnode_t *vp, int flag, int count, offset_t offset, cred_t *cr,
 	return (0);
 }
 
-static void (*lxpr_read_function[LXPR_NFILES])() = {
+static void (*lxpr_read_function[])() = {
 	NULL,				/* invalid		*/
 	lxpr_read_isdir,		/* /proc		*/
 	lxpr_read_isdir,		/* /proc/<pid>		*/
@@ -941,9 +941,12 @@ static void (*lxpr_read_function[LXPR_NFILES])() = {
 	lxpr_read_sys_net_ipv4_icmp_eib, /* .../icmp_echo_ignore_broadcasts */
 	lxpr_read_sys_net_ipv4_ip_forward, /* .../ipv4/ip_forward */
 	lxpr_read_sys_net_ipv4_ip_lport_range, /* ../ipv4/ip_local_port_range */
-	lxpr_read_sys_net_ipv4_tcp_cc_allow, /* .../tcp_allowed_congestion_control */
-	lxpr_read_sys_net_ipv4_tcp_cc_avail, /* .../tcp_available_congestion_control */
-	lxpr_read_sys_net_ipv4_tcp_cc_curr, /* .../tcp_congestion_control */
+	/* .../tcp_allowed_congestion_control */
+	lxpr_read_sys_net_ipv4_tcp_cc_allow,
+	/* .../tcp_available_congestion_control */
+	lxpr_read_sys_net_ipv4_tcp_cc_avail,
+	/* .../tcp_congestion_control */
+	lxpr_read_sys_net_ipv4_tcp_cc_curr,
 	lxpr_read_sys_net_ipv4_tcp_fin_to, /* .../ipv4/tcp_fin_timeout */
 	lxpr_read_sys_net_ipv4_tcp_ka_int, /* .../ipv4/tcp_keepalive_intvl */
 	lxpr_read_sys_net_ipv4_tcp_ka_tim, /* .../ipv4/tcp_keepalive_time */
@@ -971,10 +974,12 @@ static void (*lxpr_read_function[LXPR_NFILES])() = {
 	lxpr_read_vmstat,		/* /proc/vmstat		*/
 };
 
+CTASSERT(ARRAY_SIZE(lxpr_read_function) == LXPR_NFILES);
+
 /*
  * Array of lookup functions, indexed by lx /proc file type.
  */
-static vnode_t *(*lxpr_lookup_function[LXPR_NFILES])() = {
+static vnode_t *(*lxpr_lookup_function[])() = {
 	NULL,				/* invalid		*/
 	lxpr_lookup_procdir,		/* /proc		*/
 	lxpr_lookup_piddir,		/* /proc/<pid>		*/
@@ -1105,6 +1110,12 @@ static vnode_t *(*lxpr_lookup_function[LXPR_NFILES])() = {
 	lxpr_lookup_not_a_dir,		/* .../icmp_echo_ignore_broadcasts */
 	lxpr_lookup_not_a_dir,		/* .../net/ipv4/ip_forward */
 	lxpr_lookup_not_a_dir,		/* .../net/ipv4/ip_local_port_range */
+	/* .../tcp_allowed_congestion_control */
+	lxpr_lookup_not_a_dir,
+	/* .../tcp_available_congestion_control */
+	lxpr_lookup_not_a_dir,
+	/* .../tcp_congestion_control */
+	lxpr_lookup_not_a_dir,
 	lxpr_lookup_not_a_dir,		/* .../net/ipv4/tcp_fin_timeout */
 	lxpr_lookup_not_a_dir,		/* .../net/ipv4/tcp_keepalive_intvl */
 	lxpr_lookup_not_a_dir,		/* .../net/ipv4/tcp_keepalive_time */
@@ -1132,10 +1143,12 @@ static vnode_t *(*lxpr_lookup_function[LXPR_NFILES])() = {
 	lxpr_lookup_not_a_dir,		/* /proc/vmstat		*/
 };
 
+CTASSERT(ARRAY_SIZE(lxpr_lookup_function) == LXPR_NFILES);
+
 /*
  * Array of readdir functions, indexed by /proc file type.
  */
-static int (*lxpr_readdir_function[LXPR_NFILES])() = {
+static int (*lxpr_readdir_function[])() = {
 	NULL,				/* invalid		*/
 	lxpr_readdir_procdir,		/* /proc		*/
 	lxpr_readdir_piddir,		/* /proc/<pid>		*/
@@ -1266,6 +1279,12 @@ static int (*lxpr_readdir_function[LXPR_NFILES])() = {
 	lxpr_readdir_not_a_dir,		/* .../icmp_echo_ignore_broadcasts */
 	lxpr_readdir_not_a_dir,		/* .../net/ipv4/ip_forward */
 	lxpr_readdir_not_a_dir,		/* .../net/ipv4/ip_local_port_range */
+	/* .../tcp_allowed_congestion_control */
+	lxpr_readdir_not_a_dir,
+	/* .../tcp_available_congestion_control */
+	lxpr_readdir_not_a_dir,
+	/* .../tcp_congestion_control */
+	lxpr_readdir_not_a_dir,
 	lxpr_readdir_not_a_dir,		/* .../net/ipv4/tcp_fin_timeout */
 	lxpr_readdir_not_a_dir,		/* .../net/ipv4/tcp_keepalive_intvl */
 	lxpr_readdir_not_a_dir,		/* .../net/ipv4/tcp_keepalive_time */
@@ -1293,6 +1312,7 @@ static int (*lxpr_readdir_function[LXPR_NFILES])() = {
 	lxpr_readdir_not_a_dir,		/* /proc/vmstat		*/
 };
 
+CTASSERT(ARRAY_SIZE(lxpr_readdir_function) == LXPR_NFILES);
 
 /*
  * lxpr_read(): Vnode operation for VOP_READ()
@@ -1481,77 +1501,6 @@ lxpr_read_pid_cgroup(lxpr_node_t *lxpnp, lxpr_uiobuf_t *uiobuf)
 	lxpr_uiobuf_printf(uiobuf, "1:name=systemd:/\n");
 }
 
-static void
-lxpr_copy_cmdline(proc_t *p, lx_proc_data_t *pd, lxpr_uiobuf_t *uiobuf)
-{
-	uio_t *uiop = uiobuf->uiop;
-	char *buf = uiobuf->buffer;
-	int bsz = uiobuf->buffsize;
-	boolean_t env_overflow = B_FALSE;
-	uintptr_t pos = pd->l_args_start + uiop->uio_offset;
-	uintptr_t estart = pd->l_envs_start;
-	uintptr_t eend = pd->l_envs_end;
-	size_t chunk, copied;
-	int err = 0;
-
-	/* Do not bother with data beyond the end of the envp strings area. */
-	if (pos > eend) {
-		return;
-	}
-	mutex_exit(&p->p_lock);
-
-	/*
-	 * If the starting or ending bounds are outside the argv strings area,
-	 * check to see if the process has overwritten the terminating NULL.
-	 * If not, no data needs to be copied from oustide the argv area.
-	 */
-	if (pos >= estart || (pos + uiop->uio_resid) >= estart) {
-		uint8_t term;
-		if (uread(p, &term, sizeof (term), estart - 1) != 0) {
-			err = EFAULT;
-		} else if (term != 0) {
-			env_overflow = B_TRUE;
-		}
-	}
-
-	/* Data between astart and estart-1 can be copied freely. */
-	while (pos < estart && uiop->uio_resid > 0 && err == 0) {
-		chunk = MIN(estart - pos, uiop->uio_resid);
-		chunk = MIN(chunk, bsz);
-
-		if (prreadbuf(p, pos, (uint8_t *)buf, chunk, &copied) != 0 ||
-		    copied != chunk) {
-			err = EFAULT;
-			break;
-		}
-		err = uiomove(buf, copied, UIO_READ, uiop);
-		pos += copied;
-	}
-
-	/*
-	 * Onward from estart, data is copied as a contiguous string.  To
-	 * protect env data from potential snooping, only one buffer-sized copy
-	 * is allowed to avoid complex seek logic.
-	 */
-	if (err == 0 && env_overflow && pos == estart && uiop->uio_resid > 0) {
-		chunk = MIN(eend - pos, uiop->uio_resid);
-		chunk = MIN(chunk, bsz);
-		if (prreadbuf(p, pos, (uint8_t *)buf, chunk, &copied) == 0) {
-			int len = strnlen(buf, copied);
-			if (len > 0) {
-				err = uiomove(buf, len, UIO_READ, uiop);
-			}
-		}
-	}
-
-	uiobuf->error = err;
-	/* reset any uiobuf state */
-	uiobuf->pos = uiobuf->buffer;
-	uiobuf->beg = 0;
-
-	mutex_enter(&p->p_lock);
-}
-
 /*
  * lxpr_read_pid_cmdline(): read argument vector from process
  */
@@ -1560,8 +1509,8 @@ lxpr_read_pid_cmdline(lxpr_node_t *lxpnp, lxpr_uiobuf_t *uiobuf)
 {
 	proc_t *p;
 	char *buf;
-	size_t asz = lxpr_maxargvlen, sz;
-	lx_proc_data_t *pd;
+	size_t asz = PRMAXARGVLEN, sz;
+	int r;
 
 	ASSERT(lxpnp->lxpr_type == LXPR_PID_CMDLINE ||
 	    lxpnp->lxpr_type == LXPR_PID_TID_CMDLINE);
@@ -1574,23 +1523,16 @@ lxpr_read_pid_cmdline(lxpr_node_t *lxpnp, lxpr_uiobuf_t *uiobuf)
 		return;
 	}
 
-	if ((pd = ptolxproc(p)) != NULL && pd->l_args_start != 0 &&
-	    pd->l_envs_start != 0 && pd->l_envs_end != 0) {
-		/* Use Linux-style argv bounds if possible. */
-		lxpr_copy_cmdline(p, pd, uiobuf);
-		lxpr_unlock(p);
+	r = prreadcmdline(p, buf, asz, &sz);
+
+	lxpr_unlock(p);
+
+	if (r != 0) {
+		lxpr_uiobuf_seterr(uiobuf, EINVAL);
 	} else {
-		int r;
-
-		r = prreadargv(p, buf, asz, &sz);
-		lxpr_unlock(p);
-
-		if (r != 0) {
-			lxpr_uiobuf_seterr(uiobuf, EINVAL);
-		} else {
-			lxpr_uiobuf_write(uiobuf, buf, sz);
-		}
+		lxpr_uiobuf_write(uiobuf, buf, sz);
 	}
+
 	kmem_free(buf, asz);
 }
 
