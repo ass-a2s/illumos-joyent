@@ -26,7 +26,7 @@
 /*
  * Copyright 2015 Nexenta Systems, Inc. All rights reserved.
  * Copyright 2016 Toomas Soome <tsoome@me.com>
- * Copyright 2018 OmniOS Community Edition (OmniOSce) Association.
+ * Copyright 2019 OmniOS Community Edition (OmniOSce) Association.
  */
 
 /*
@@ -793,8 +793,9 @@ list_menu_entry(menu_entry_t *entry, char *setting)
 	ficlVm *vm;
 	int mounted;
 
+	ptr = strrchr(entry->me_bootfs, ':');
 	if (strcmp(entry->me_type, "bootfs") != 0 ||
-	    strchr(entry->me_bootfs, ':') != NULL) {
+	    (ptr != NULL && ptr[1] == '\0')) {
 		(void) printf("\nTitle:       %s\n", entry->me_title);
 		(void) printf("Type:        %s\n", entry->me_type);
 		(void) printf("Device:      %s\n", entry->me_bootfs);
@@ -1135,9 +1136,9 @@ update_temp(struct menu_lst *menu, char *dummy, char *opt)
 
 		if (env != NULL) {
 			env = getenv("boot-args");
-			(void) fprintf(fp, "boot-args=\"%s %s\"\n", env, opt);
+			(void) fprintf(fp, "boot-args='%s %s'\n", env, opt);
 		} else
-			(void) fprintf(fp, "boot-args=\"%s\"\n", opt);
+			(void) fprintf(fp, "boot-args='%s'\n", opt);
 		(void) fclose(fp);
 		return (BAM_SUCCESS);
 	}
@@ -1154,7 +1155,7 @@ update_temp(struct menu_lst *menu, char *dummy, char *opt)
 		fp = fopen(path, "w");
 		if (fp == NULL)
 			return (BAM_ERROR);
-		(void) fprintf(fp, "bootfile=\"%s;unix\"\n", opt);
+		(void) fprintf(fp, "bootfile='%s;unix'\n", opt);
 		(void) fclose(fp);
 		return (BAM_SUCCESS);
 	}
@@ -1162,13 +1163,13 @@ update_temp(struct menu_lst *menu, char *dummy, char *opt)
 	fp = fopen(path, "w");
 	if (fp == NULL)
 		return (BAM_ERROR);
-	(void) fprintf(fp, "bootfile=\"%s;unix\"\n", opt);
+	(void) fprintf(fp, "bootfile='%s;unix'\n", opt);
 
 	if (env != NULL) {
 		env = getenv("boot-args");
-		(void) fprintf(fp, "boot-args=\"%s %s\"\n", env, opt);
+		(void) fprintf(fp, "boot-args='%s %s'\n", env, o);
 	} else
-		(void) fprintf(fp, "boot-args=\"%s\"\n", o);
+		(void) fprintf(fp, "boot-args='%s'\n", o);
 
 	(void) fflush(fp);
 	(void) fclose(fp);
