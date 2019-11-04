@@ -10,7 +10,7 @@
 #
 
 #
-# Copyright (c) 2018, Joyent, Inc.
+# Copyright 2019 Joyent, Inc.
 #
 
 include	$(SRC)/data/Makefile.data
@@ -21,16 +21,18 @@ ROOTINTELDIR = $(ROOTUCODEPATH)/GenuineIntel
 
 AMD_FILES :sh= (cd amd; print *)
 INTEL_FILES :sh= (cd intel; print *)
+include $(SRC)/data/ucode/Makefile.links
 
 ROOTAMDFILES = $(AMD_FILES:%=$(ROOTAMDDIR)/%)
 ROOTINTELFILES = $(INTEL_FILES:%=$(ROOTINTELDIR)/%)
+ROOTINTELLINKS = $(INTEL_LINKS:%=$(ROOTINTELDIR)/%)
 
 $(ROOTAMDFILES) := FILEMODE = 444
 $(ROOTINTELFILES) := FILEMODE = 444
 
 all:
 
-install: $(ROOTAMDFILES) $(ROOTINTELFILES)
+install: $(ROOTAMDFILES) $(ROOTINTELFILES) $(ROOTINTELLINKS)
 
 clean:
 

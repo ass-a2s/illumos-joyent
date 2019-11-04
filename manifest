@@ -267,8 +267,8 @@ d etc/bash 0755 root sys
 f etc/bash/bash_completion 0644 root sys
 d etc/bash/bash_completion.d 0755 root sys
 f etc/bash/bash_completion.d/dladm 0644 root sys
-f etc/bash/bash_completion.d/zones 0644 root sys
 f etc/bash/bash_completion.d/zone_alias 0644 root sys
+f etc/bash/bash_completion.d/zones 0644 root sys
 d etc/brand 0755 root sys
 d etc/certs 0755 root sys
 d etc/cron.d 0755 root sys
@@ -1897,9 +1897,9 @@ f platform/i86pc/kernel/drv/amd64/cpc 0755 root sys
 f platform/i86pc/kernel/drv/amd64/cpudrv 0755 root sys
 f platform/i86pc/kernel/drv/amd64/dr 0755 root sys
 f platform/i86pc/kernel/drv/amd64/fipe 0755 root sys
-f platform/i86pc/kernel/drv/amd64/ioat 0755 root sys
 f platform/i86pc/kernel/drv/amd64/imc 0755 root sys
 f platform/i86pc/kernel/drv/amd64/imcstub 0755 root sys
+f platform/i86pc/kernel/drv/amd64/ioat 0755 root sys
 f platform/i86pc/kernel/drv/amd64/isa 0755 root sys
 f platform/i86pc/kernel/drv/amd64/npe 0755 root sys
 f platform/i86pc/kernel/drv/amd64/pci 0755 root sys
@@ -1912,8 +1912,8 @@ f platform/i86pc/kernel/drv/amd_iommu.conf 0644 root sys
 f platform/i86pc/kernel/drv/cpc.conf 0644 root sys
 f platform/i86pc/kernel/drv/dr.conf 0644 root sys
 f platform/i86pc/kernel/drv/fipe.conf 0644 root sys
-f platform/i86pc/kernel/drv/ioat.conf 0644 root sys
 f platform/i86pc/kernel/drv/imc.conf 0644 root sys
+f platform/i86pc/kernel/drv/ioat.conf 0644 root sys
 f platform/i86pc/kernel/drv/pci-ide.conf 0644 root sys
 f platform/i86pc/kernel/drv/pit_beep.conf 0644 root sys
 f platform/i86pc/kernel/drv/ppm.conf 0644 root sys
@@ -2087,62 +2087,62 @@ f platform/i86pc/ucode/GenuineIntel/00000F29-02 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00000F29-04 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00000F29-08 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00000F32-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F32-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F32-08 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00000F32-04=platform/i86pc/ucode/GenuineIntel/00000F32-01
+h platform/i86pc/ucode/GenuineIntel/00000F32-08=platform/i86pc/ucode/GenuineIntel/00000F32-01
 f platform/i86pc/ucode/GenuineIntel/00000F33-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F33-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F33-08 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00000F33-04=platform/i86pc/ucode/GenuineIntel/00000F33-01
+h platform/i86pc/ucode/GenuineIntel/00000F33-08=platform/i86pc/ucode/GenuineIntel/00000F33-01
 f platform/i86pc/ucode/GenuineIntel/00000F34-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F34-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F34-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F34-10 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00000F34-04=platform/i86pc/ucode/GenuineIntel/00000F34-01
+h platform/i86pc/ucode/GenuineIntel/00000F34-08=platform/i86pc/ucode/GenuineIntel/00000F34-01
+h platform/i86pc/ucode/GenuineIntel/00000F34-10=platform/i86pc/ucode/GenuineIntel/00000F34-01
 f platform/i86pc/ucode/GenuineIntel/00000F41-01 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00000F41-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F41-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F41-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F41-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F41-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F41-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00000F41-04=platform/i86pc/ucode/GenuineIntel/00000F41-01
+h platform/i86pc/ucode/GenuineIntel/00000F41-08=platform/i86pc/ucode/GenuineIntel/00000F41-01
+h platform/i86pc/ucode/GenuineIntel/00000F41-10=platform/i86pc/ucode/GenuineIntel/00000F41-01
+h platform/i86pc/ucode/GenuineIntel/00000F41-20=platform/i86pc/ucode/GenuineIntel/00000F41-01
+h platform/i86pc/ucode/GenuineIntel/00000F41-80=platform/i86pc/ucode/GenuineIntel/00000F41-01
 f platform/i86pc/ucode/GenuineIntel/00000F43-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F43-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F43-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F43-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F43-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00000F43-04=platform/i86pc/ucode/GenuineIntel/00000F43-01
+h platform/i86pc/ucode/GenuineIntel/00000F43-08=platform/i86pc/ucode/GenuineIntel/00000F43-01
+h platform/i86pc/ucode/GenuineIntel/00000F43-10=platform/i86pc/ucode/GenuineIntel/00000F43-01
+h platform/i86pc/ucode/GenuineIntel/00000F43-80=platform/i86pc/ucode/GenuineIntel/00000F43-01
 f platform/i86pc/ucode/GenuineIntel/00000F44-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F44-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F44-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F44-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F44-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00000F44-04=platform/i86pc/ucode/GenuineIntel/00000F44-01
+h platform/i86pc/ucode/GenuineIntel/00000F44-08=platform/i86pc/ucode/GenuineIntel/00000F44-01
+h platform/i86pc/ucode/GenuineIntel/00000F44-10=platform/i86pc/ucode/GenuineIntel/00000F44-01
+h platform/i86pc/ucode/GenuineIntel/00000F44-80=platform/i86pc/ucode/GenuineIntel/00000F44-01
 f platform/i86pc/ucode/GenuineIntel/00000F47-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F47-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F47-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F47-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F47-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00000F47-04=platform/i86pc/ucode/GenuineIntel/00000F47-01
+h platform/i86pc/ucode/GenuineIntel/00000F47-08=platform/i86pc/ucode/GenuineIntel/00000F47-01
+h platform/i86pc/ucode/GenuineIntel/00000F47-10=platform/i86pc/ucode/GenuineIntel/00000F47-01
+h platform/i86pc/ucode/GenuineIntel/00000F47-80=platform/i86pc/ucode/GenuineIntel/00000F47-01
 f platform/i86pc/ucode/GenuineIntel/00000F48-01 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00000F48-02 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00000F48-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F48-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F48-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F48-40 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00000F48-08=platform/i86pc/ucode/GenuineIntel/00000F48-04
+h platform/i86pc/ucode/GenuineIntel/00000F48-10=platform/i86pc/ucode/GenuineIntel/00000F48-04
+h platform/i86pc/ucode/GenuineIntel/00000F48-40=platform/i86pc/ucode/GenuineIntel/00000F48-04
 f platform/i86pc/ucode/GenuineIntel/00000F49-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F49-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F49-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F49-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F49-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F49-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00000F49-04=platform/i86pc/ucode/GenuineIntel/00000F49-01
+h platform/i86pc/ucode/GenuineIntel/00000F49-08=platform/i86pc/ucode/GenuineIntel/00000F49-01
+h platform/i86pc/ucode/GenuineIntel/00000F49-10=platform/i86pc/ucode/GenuineIntel/00000F49-01
+h platform/i86pc/ucode/GenuineIntel/00000F49-20=platform/i86pc/ucode/GenuineIntel/00000F49-01
+h platform/i86pc/ucode/GenuineIntel/00000F49-80=platform/i86pc/ucode/GenuineIntel/00000F49-01
 f platform/i86pc/ucode/GenuineIntel/00000F4A-01 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00000F4A-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F4A-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F4A-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F4A-40 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00000F4A-08=platform/i86pc/ucode/GenuineIntel/00000F4A-04
+h platform/i86pc/ucode/GenuineIntel/00000F4A-10=platform/i86pc/ucode/GenuineIntel/00000F4A-04
+h platform/i86pc/ucode/GenuineIntel/00000F4A-40=platform/i86pc/ucode/GenuineIntel/00000F4A-04
 f platform/i86pc/ucode/GenuineIntel/00000F62-04 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00000F64-01 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00000F64-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F64-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F64-20 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00000F64-10=platform/i86pc/ucode/GenuineIntel/00000F64-04
+h platform/i86pc/ucode/GenuineIntel/00000F64-20=platform/i86pc/ucode/GenuineIntel/00000F64-04
 f platform/i86pc/ucode/GenuineIntel/00000F65-01 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00000F68-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00000F68-20 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00000F68-20=platform/i86pc/ucode/GenuineIntel/00000F68-02
 f platform/i86pc/ucode/GenuineIntel/00001632-00 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00010661-01 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00010661-02 0444 root sys
@@ -2155,14 +2155,14 @@ f platform/i86pc/ucode/GenuineIntel/00010676-80 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00010677-10 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/0001067A-01 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/0001067A-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/0001067A-10 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/0001067A-10=platform/i86pc/ucode/GenuineIntel/0001067A-01
 f platform/i86pc/ucode/GenuineIntel/0001067A-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/0001067A-40 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/0001067A-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/0001067A-40=platform/i86pc/ucode/GenuineIntel/0001067A-04
+h platform/i86pc/ucode/GenuineIntel/0001067A-80=platform/i86pc/ucode/GenuineIntel/0001067A-20
 f platform/i86pc/ucode/GenuineIntel/000106A4-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000106A4-02 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000106A4-02=platform/i86pc/ucode/GenuineIntel/000106A4-01
 f platform/i86pc/ucode/GenuineIntel/000106A5-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000106A5-02 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000106A5-02=platform/i86pc/ucode/GenuineIntel/000106A5-01
 f platform/i86pc/ucode/GenuineIntel/000106C2-01 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/000106C2-04 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/000106C2-08 0444 root sys
@@ -2172,149 +2172,140 @@ f platform/i86pc/ucode/GenuineIntel/000106CA-08 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/000106CA-10 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/000106D1-08 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/000106E5-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000106E5-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000106E5-10 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000106E5-02=platform/i86pc/ucode/GenuineIntel/000106E5-01
+h platform/i86pc/ucode/GenuineIntel/000106E5-10=platform/i86pc/ucode/GenuineIntel/000106E5-01
 f platform/i86pc/ucode/GenuineIntel/00020652-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00020652-10 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00020652-10=platform/i86pc/ucode/GenuineIntel/00020652-02
 f platform/i86pc/ucode/GenuineIntel/00020655-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00020655-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00020655-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00020655-10=platform/i86pc/ucode/GenuineIntel/00020655-02
+h platform/i86pc/ucode/GenuineIntel/00020655-80=platform/i86pc/ucode/GenuineIntel/00020655-02
 f platform/i86pc/ucode/GenuineIntel/00020661-01 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00020661-02 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/000206A7-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000206A7-10 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000206A7-10=platform/i86pc/ucode/GenuineIntel/000206A7-02
 f platform/i86pc/ucode/GenuineIntel/000206C2-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000206C2-02 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000206C2-02=platform/i86pc/ucode/GenuineIntel/000206C2-01
 f platform/i86pc/ucode/GenuineIntel/000206D6-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000206D6-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000206D6-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000206D6-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000206D6-40 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000206D6-04=platform/i86pc/ucode/GenuineIntel/000206D6-01
+h platform/i86pc/ucode/GenuineIntel/000206D6-08=platform/i86pc/ucode/GenuineIntel/000206D6-01
+h platform/i86pc/ucode/GenuineIntel/000206D6-20=platform/i86pc/ucode/GenuineIntel/000206D6-01
+h platform/i86pc/ucode/GenuineIntel/000206D6-40=platform/i86pc/ucode/GenuineIntel/000206D6-01
 f platform/i86pc/ucode/GenuineIntel/000206D7-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000206D7-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000206D7-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000206D7-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000206D7-40 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000206D7-04=platform/i86pc/ucode/GenuineIntel/000206D7-01
+h platform/i86pc/ucode/GenuineIntel/000206D7-08=platform/i86pc/ucode/GenuineIntel/000206D7-01
+h platform/i86pc/ucode/GenuineIntel/000206D7-20=platform/i86pc/ucode/GenuineIntel/000206D7-01
+h platform/i86pc/ucode/GenuineIntel/000206D7-40=platform/i86pc/ucode/GenuineIntel/000206D7-01
 f platform/i86pc/ucode/GenuineIntel/000206E6-04 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/000206F2-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000206F2-04 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000206F2-04=platform/i86pc/ucode/GenuineIntel/000206F2-01
+f platform/i86pc/ucode/GenuineIntel/00030678-02 0444 root sys
+f platform/i86pc/ucode/GenuineIntel/00030678-04 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00030678-08=platform/i86pc/ucode/GenuineIntel/00030678-04
+f platform/i86pc/ucode/GenuineIntel/00030679-01 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00030679-02=platform/i86pc/ucode/GenuineIntel/00030679-01
+h platform/i86pc/ucode/GenuineIntel/00030679-04=platform/i86pc/ucode/GenuineIntel/00030679-01
+h platform/i86pc/ucode/GenuineIntel/00030679-08=platform/i86pc/ucode/GenuineIntel/00030679-01
 f platform/i86pc/ucode/GenuineIntel/000306A9-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306A9-10 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000306A9-10=platform/i86pc/ucode/GenuineIntel/000306A9-02
 f platform/i86pc/ucode/GenuineIntel/000306C3-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306C3-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306C3-20 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000306C3-10=platform/i86pc/ucode/GenuineIntel/000306C3-02
+h platform/i86pc/ucode/GenuineIntel/000306C3-20=platform/i86pc/ucode/GenuineIntel/000306C3-02
 f platform/i86pc/ucode/GenuineIntel/000306D4-40 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306D4-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000306D4-80=platform/i86pc/ucode/GenuineIntel/000306D4-40
 f platform/i86pc/ucode/GenuineIntel/000306E4-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E4-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E4-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E4-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E4-40 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E4-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000306E4-04=platform/i86pc/ucode/GenuineIntel/000306E4-01
+h platform/i86pc/ucode/GenuineIntel/000306E4-08=platform/i86pc/ucode/GenuineIntel/000306E4-01
+h platform/i86pc/ucode/GenuineIntel/000306E4-20=platform/i86pc/ucode/GenuineIntel/000306E4-01
+h platform/i86pc/ucode/GenuineIntel/000306E4-40=platform/i86pc/ucode/GenuineIntel/000306E4-01
+h platform/i86pc/ucode/GenuineIntel/000306E4-80=platform/i86pc/ucode/GenuineIntel/000306E4-01
 f platform/i86pc/ucode/GenuineIntel/000306E6-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E6-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E6-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E6-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E6-40 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E6-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000306E6-04=platform/i86pc/ucode/GenuineIntel/000306E6-01
+h platform/i86pc/ucode/GenuineIntel/000306E6-08=platform/i86pc/ucode/GenuineIntel/000306E6-01
+h platform/i86pc/ucode/GenuineIntel/000306E6-20=platform/i86pc/ucode/GenuineIntel/000306E6-01
+h platform/i86pc/ucode/GenuineIntel/000306E6-40=platform/i86pc/ucode/GenuineIntel/000306E6-01
+h platform/i86pc/ucode/GenuineIntel/000306E6-80=platform/i86pc/ucode/GenuineIntel/000306E6-01
 f platform/i86pc/ucode/GenuineIntel/000306E7-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E7-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E7-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E7-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E7-40 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306E7-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000306E7-04=platform/i86pc/ucode/GenuineIntel/000306E7-01
+h platform/i86pc/ucode/GenuineIntel/000306E7-08=platform/i86pc/ucode/GenuineIntel/000306E7-01
+h platform/i86pc/ucode/GenuineIntel/000306E7-20=platform/i86pc/ucode/GenuineIntel/000306E7-01
+h platform/i86pc/ucode/GenuineIntel/000306E7-40=platform/i86pc/ucode/GenuineIntel/000306E7-01
+h platform/i86pc/ucode/GenuineIntel/000306E7-80=platform/i86pc/ucode/GenuineIntel/000306E7-01
 f platform/i86pc/ucode/GenuineIntel/000306F2-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306F2-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306F2-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306F2-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306F2-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000306F2-40 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000306F2-02=platform/i86pc/ucode/GenuineIntel/000306F2-01
+h platform/i86pc/ucode/GenuineIntel/000306F2-04=platform/i86pc/ucode/GenuineIntel/000306F2-01
+h platform/i86pc/ucode/GenuineIntel/000306F2-08=platform/i86pc/ucode/GenuineIntel/000306F2-01
+h platform/i86pc/ucode/GenuineIntel/000306F2-20=platform/i86pc/ucode/GenuineIntel/000306F2-01
+h platform/i86pc/ucode/GenuineIntel/000306F2-40=platform/i86pc/ucode/GenuineIntel/000306F2-01
 f platform/i86pc/ucode/GenuineIntel/000306F4-80 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00040651-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00040651-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00040651-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00040651-40 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00040651-10=platform/i86pc/ucode/GenuineIntel/00040651-02
+h platform/i86pc/ucode/GenuineIntel/00040651-20=platform/i86pc/ucode/GenuineIntel/00040651-02
+h platform/i86pc/ucode/GenuineIntel/00040651-40=platform/i86pc/ucode/GenuineIntel/00040651-02
 f platform/i86pc/ucode/GenuineIntel/00040661-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00040661-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00040661-20 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00040661-10=platform/i86pc/ucode/GenuineIntel/00040661-02
+h platform/i86pc/ucode/GenuineIntel/00040661-20=platform/i86pc/ucode/GenuineIntel/00040661-02
 f platform/i86pc/ucode/GenuineIntel/00040671-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00040671-20 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00040671-20=platform/i86pc/ucode/GenuineIntel/00040671-02
+f platform/i86pc/ucode/GenuineIntel/000406C3-01 0444 root sys
+f platform/i86pc/ucode/GenuineIntel/000406C4-01 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/000406E3-40 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000406E3-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000406E3-80=platform/i86pc/ucode/GenuineIntel/000406E3-40
 f platform/i86pc/ucode/GenuineIntel/000406F1-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000406F1-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000406F1-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000406F1-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000406F1-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000406F1-40 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000406F1-80 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050653-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050653-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050653-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050653-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050653-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000406F1-02=platform/i86pc/ucode/GenuineIntel/000406F1-01
+h platform/i86pc/ucode/GenuineIntel/000406F1-04=platform/i86pc/ucode/GenuineIntel/000406F1-01
+h platform/i86pc/ucode/GenuineIntel/000406F1-08=platform/i86pc/ucode/GenuineIntel/000406F1-01
+h platform/i86pc/ucode/GenuineIntel/000406F1-20=platform/i86pc/ucode/GenuineIntel/000406F1-01
+h platform/i86pc/ucode/GenuineIntel/000406F1-40=platform/i86pc/ucode/GenuineIntel/000406F1-01
+h platform/i86pc/ucode/GenuineIntel/000406F1-80=platform/i86pc/ucode/GenuineIntel/000406F1-01
 f platform/i86pc/ucode/GenuineIntel/00050654-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050654-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050654-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050654-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050654-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050654-80 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050655-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050655-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050655-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050655-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050655-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050655-80 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050656-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050656-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050656-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050656-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050656-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050656-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050656-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00050654-02=platform/i86pc/ucode/GenuineIntel/00050654-01
+h platform/i86pc/ucode/GenuineIntel/00050654-04=platform/i86pc/ucode/GenuineIntel/00050654-01
+h platform/i86pc/ucode/GenuineIntel/00050654-10=platform/i86pc/ucode/GenuineIntel/00050654-01
+h platform/i86pc/ucode/GenuineIntel/00050654-20=platform/i86pc/ucode/GenuineIntel/00050654-01
+h platform/i86pc/ucode/GenuineIntel/00050654-80=platform/i86pc/ucode/GenuineIntel/00050654-01
 f platform/i86pc/ucode/GenuineIntel/00050657-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050657-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050657-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050657-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050657-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050657-20 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/00050657-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/00050657-02=platform/i86pc/ucode/GenuineIntel/00050657-01
+h platform/i86pc/ucode/GenuineIntel/00050657-04=platform/i86pc/ucode/GenuineIntel/00050657-01
+h platform/i86pc/ucode/GenuineIntel/00050657-08=platform/i86pc/ucode/GenuineIntel/00050657-01
+h platform/i86pc/ucode/GenuineIntel/00050657-10=platform/i86pc/ucode/GenuineIntel/00050657-01
+h platform/i86pc/ucode/GenuineIntel/00050657-20=platform/i86pc/ucode/GenuineIntel/00050657-01
+h platform/i86pc/ucode/GenuineIntel/00050657-80=platform/i86pc/ucode/GenuineIntel/00050657-01
 f platform/i86pc/ucode/GenuineIntel/00050662-10 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00050663-10 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00050664-10 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/00050665-10 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/000506C2-01 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/000506C9-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000506C9-02 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000506C9-02=platform/i86pc/ucode/GenuineIntel/000506C9-01
 f platform/i86pc/ucode/GenuineIntel/000506CA-01 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000506CA-02 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000506CA-02=platform/i86pc/ucode/GenuineIntel/000506CA-01
 f platform/i86pc/ucode/GenuineIntel/000506E3-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000506E3-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000506E3-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000506E3-20 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000506E3-04=platform/i86pc/ucode/GenuineIntel/000506E3-02
+h platform/i86pc/ucode/GenuineIntel/000506E3-10=platform/i86pc/ucode/GenuineIntel/000506E3-02
+h platform/i86pc/ucode/GenuineIntel/000506E3-20=platform/i86pc/ucode/GenuineIntel/000506E3-02
 f platform/i86pc/ucode/GenuineIntel/000506F1-01 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/000706A1-01 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/000806E9-10 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/000806E9-40 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000806E9-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000806E9-80=platform/i86pc/ucode/GenuineIntel/000806E9-40
 f platform/i86pc/ucode/GenuineIntel/000806EA-40 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000806EA-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000806EA-80=platform/i86pc/ucode/GenuineIntel/000806EA-40
 f platform/i86pc/ucode/GenuineIntel/000806EB-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000806EB-40 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000806EB-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000806EB-40=platform/i86pc/ucode/GenuineIntel/000806EB-10
+h platform/i86pc/ucode/GenuineIntel/000806EB-80=platform/i86pc/ucode/GenuineIntel/000806EB-10
 f platform/i86pc/ucode/GenuineIntel/000806EC-04 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000806EC-10 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000806EC-80 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000806EC-10=platform/i86pc/ucode/GenuineIntel/000806EC-04
+h platform/i86pc/ucode/GenuineIntel/000806EC-80=platform/i86pc/ucode/GenuineIntel/000806EC-04
 f platform/i86pc/ucode/GenuineIntel/000906E9-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000906E9-08 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000906E9-20 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000906E9-08=platform/i86pc/ucode/GenuineIntel/000906E9-02
+h platform/i86pc/ucode/GenuineIntel/000906E9-20=platform/i86pc/ucode/GenuineIntel/000906E9-02
 f platform/i86pc/ucode/GenuineIntel/000906EA-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000906EA-20 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000906EA-20=platform/i86pc/ucode/GenuineIntel/000906EA-02
 f platform/i86pc/ucode/GenuineIntel/000906EB-02 0444 root sys
 f platform/i86pc/ucode/GenuineIntel/000906EC-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000906EC-20 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000906EC-20=platform/i86pc/ucode/GenuineIntel/000906EC-02
 f platform/i86pc/ucode/GenuineIntel/000906ED-02 0444 root sys
-f platform/i86pc/ucode/GenuineIntel/000906ED-20 0444 root sys
+h platform/i86pc/ucode/GenuineIntel/000906ED-20=platform/i86pc/ucode/GenuineIntel/000906ED-02
 d proc 0755 root root
 d root 0755 root root
 f root/.bash_profile 0644 root root
@@ -5735,8 +5726,8 @@ f usr/lib/fm/fmd/fmd 0555 root bin
 f usr/lib/fm/fmd/fminject 0555 root bin
 f usr/lib/fm/fmd/fmsim 0555 root bin
 f usr/lib/fm/fmd/fmtopo 0555 root bin
-f usr/lib/fm/fmd/mcdecode 0555 root bin
 f usr/lib/fm/fmd/ipmitopo 0555 root bin
+f usr/lib/fm/fmd/mcdecode 0555 root bin
 d usr/lib/fm/fmd/plugins 0755 root bin
 f usr/lib/fm/fmd/plugins/cpumem-retire.conf 0644 root bin
 f usr/lib/fm/fmd/plugins/cpumem-retire.so 0555 root bin
@@ -6950,6 +6941,14 @@ f usr/lib/link_audit/truss.so.1 0755 root bin
 f usr/lib/link_audit/who.so.1 0755 root bin
 d usr/lib/locale 0755 root bin
 d usr/lib/locale/C 0755 root bin
+d usr/lib/locale/C.UTF-8 0755 root bin
+d usr/lib/locale/C.UTF-8/LC_COLLATE 0755 root bin
+d usr/lib/locale/C.UTF-8/LC_CTYPE 0755 root bin
+f usr/lib/locale/C.UTF-8/LC_CTYPE/LCL_DATA 0444 root bin
+d usr/lib/locale/C.UTF-8/LC_MESSAGES 0755 root bin
+d usr/lib/locale/C.UTF-8/LC_MONETARY 0755 root bin
+d usr/lib/locale/C.UTF-8/LC_NUMERIC 0755 root bin
+d usr/lib/locale/C.UTF-8/LC_TIME 0755 root bin
 d usr/lib/locale/C/LC_COLLATE 0755 root bin
 d usr/lib/locale/C/LC_CTYPE 0755 root bin
 d usr/lib/locale/C/LC_MESSAGES 0755 root bin
@@ -7004,14 +7003,6 @@ d usr/lib/locale/C/LC_MONETARY 0755 root bin
 d usr/lib/locale/C/LC_NUMERIC 0755 root bin
 d usr/lib/locale/C/LC_TIME 0755 root bin
 f usr/lib/locale/C/LC_TIME/SUNW_OST_OSCMD.po 0644 root bin
-d usr/lib/locale/C.UTF-8 0755 root bin
-d usr/lib/locale/C.UTF-8/LC_COLLATE 0755 root bin
-d usr/lib/locale/C.UTF-8/LC_CTYPE 0755 root bin
-f usr/lib/locale/C.UTF-8/LC_CTYPE/LCL_DATA 0444 root bin
-d usr/lib/locale/C.UTF-8/LC_MESSAGES 0755 root bin
-d usr/lib/locale/C.UTF-8/LC_MONETARY 0755 root bin
-d usr/lib/locale/C.UTF-8/LC_NUMERIC 0755 root bin
-d usr/lib/locale/C.UTF-8/LC_TIME 0755 root bin
 s usr/lib/locale/POSIX=C
 d usr/lib/locale/af_ZA.UTF-8 0755 root bin
 d usr/lib/locale/af_ZA.UTF-8/LC_COLLATE 0755 root bin
@@ -11136,6 +11127,9 @@ d usr/share/lib/terminfo/a 0755 root bin
 f usr/share/lib/terminfo/a/ansi 0644 root bin
 f usr/share/lib/terminfo/a/ansi+arrows 0644 root bin
 f usr/share/lib/terminfo/a/at386 0644 root bin
+d usr/share/lib/terminfo/r 0755 root bin
+f usr/share/lib/terminfo/r/rxvt-unicode 0644 root bin
+f usr/share/lib/terminfo/r/rxvt-unicode-256color 0644 root bin
 d usr/share/lib/terminfo/s 0755 root bin
 f usr/share/lib/terminfo/s/screen 0644 root bin
 f usr/share/lib/terminfo/s/screen-256color 0644 root bin
@@ -12537,8 +12531,8 @@ f usr/share/man/man1m/rcapadm.1m 0444 root bin
 f usr/share/man/man1m/rcapd.1m 0444 root bin
 f usr/share/man/man1m/rctladm.1m 0444 root bin
 f usr/share/man/man1m/rdate.1m 0444 root bin
-f usr/share/man/man1m/rdmsr.1m 0444 root bin
 s usr/share/man/man1m/rdisc.1m=in.rdisc.1m
+f usr/share/man/man1m/rdmsr.1m 0444 root bin
 f usr/share/man/man1m/reboot.1m 0444 root bin
 f usr/share/man/man1m/rem_drv.1m 0444 root bin
 f usr/share/man/man1m/repquota.1m 0444 root bin
@@ -16383,49 +16377,132 @@ f usr/share/man/man3lib/libxnet.3lib 0444 root bin
 f usr/share/man/man3lib/liby.3lib 0444 root bin
 d usr/share/man/man3m 0755 root bin
 f usr/share/man/man3m/acos.3m 0444 root bin
+s usr/share/man/man3m/acosf.3m=acos.3m
 f usr/share/man/man3m/acosh.3m 0444 root bin
+s usr/share/man/man3m/acoshf.3m=acosh.3m
+s usr/share/man/man3m/acoshl.3m=acosh.3m
+s usr/share/man/man3m/acosl.3m=acos.3m
 f usr/share/man/man3m/asin.3m 0444 root bin
+s usr/share/man/man3m/asinf.3m=asin.3m
 f usr/share/man/man3m/asinh.3m 0444 root bin
+s usr/share/man/man3m/asinhf.3m=asinh.3m
+s usr/share/man/man3m/asinhl.3m=asinh.3m
+s usr/share/man/man3m/asinl.3m=asin.3m
 f usr/share/man/man3m/atan.3m 0444 root bin
 f usr/share/man/man3m/atan2.3m 0444 root bin
+s usr/share/man/man3m/atan2f.3m=atan2.3m
+s usr/share/man/man3m/atan2l.3m=atan2.3m
+s usr/share/man/man3m/atanf.3m=atan.3m
 f usr/share/man/man3m/atanh.3m 0444 root bin
+s usr/share/man/man3m/atanhf.3m=atanh.3m
+s usr/share/man/man3m/atanhl.3m=atanh.3m
+s usr/share/man/man3m/atanl.3m=atan.3m
 f usr/share/man/man3m/cabs.3m 0444 root bin
+s usr/share/man/man3m/cabsf.3m=cabs.3m
+s usr/share/man/man3m/cabsl.3m=cabs.3m
 f usr/share/man/man3m/cacos.3m 0444 root bin
+s usr/share/man/man3m/cacosf.3m=cacos.3m
 f usr/share/man/man3m/cacosh.3m 0444 root bin
+s usr/share/man/man3m/cacoshf.3m=cacosh.3m
+s usr/share/man/man3m/cacoshl.3m=cacosh.3m
+s usr/share/man/man3m/cacosl.3m=cacos.3m
 f usr/share/man/man3m/carg.3m 0444 root bin
+s usr/share/man/man3m/cargf.3m=carg.3m
+s usr/share/man/man3m/cargl.3m=carg.3m
 f usr/share/man/man3m/casin.3m 0444 root bin
+s usr/share/man/man3m/casinf.3m=casin.3m
 f usr/share/man/man3m/casinh.3m 0444 root bin
+s usr/share/man/man3m/casinhf.3m=casinh.3m
+s usr/share/man/man3m/casinhl.3m=casinh.3m
+s usr/share/man/man3m/casinl.3m=casin.3m
 f usr/share/man/man3m/catan.3m 0444 root bin
+s usr/share/man/man3m/catanf.3m=catan.3m
 f usr/share/man/man3m/catanh.3m 0444 root bin
+s usr/share/man/man3m/catanhf.3m=catanh.3m
+s usr/share/man/man3m/catanhl.3m=catanh.3m
+s usr/share/man/man3m/catanl.3m=catan.3m
 f usr/share/man/man3m/cbrt.3m 0444 root bin
+s usr/share/man/man3m/cbrtf.3m=cbrt.3m
+s usr/share/man/man3m/cbrtl.3m=cbrt.3m
 f usr/share/man/man3m/ccos.3m 0444 root bin
+s usr/share/man/man3m/ccosf.3m=ccos.3m
 f usr/share/man/man3m/ccosh.3m 0444 root bin
+s usr/share/man/man3m/ccoshf.3m=ccosh.3m
+s usr/share/man/man3m/ccoshl.3m=ccosh.3m
+s usr/share/man/man3m/ccosl.3m=ccos.3m
 f usr/share/man/man3m/ceil.3m 0444 root bin
+s usr/share/man/man3m/ceilf.3m=ceil.3m
+s usr/share/man/man3m/ceill.3m=ceil.3m
 f usr/share/man/man3m/cexp.3m 0444 root bin
+s usr/share/man/man3m/cexpf.3m=cexp.3m
+s usr/share/man/man3m/cexpl.3m=cexp.3m
 f usr/share/man/man3m/cimag.3m 0444 root bin
+s usr/share/man/man3m/cimagf.3m=cimag.3m
+s usr/share/man/man3m/cimagl.3m=cimag.3m
 f usr/share/man/man3m/clog.3m 0444 root bin
+s usr/share/man/man3m/clogf.3m=clog.3m
+s usr/share/man/man3m/clogl.3m=clog.3m
 f usr/share/man/man3m/conj.3m 0444 root bin
+s usr/share/man/man3m/conjf.3m=conj.3m
+s usr/share/man/man3m/conjl.3m=conj.3m
 f usr/share/man/man3m/copysign.3m 0444 root bin
+s usr/share/man/man3m/copysignf.3m=copysign.3m
+s usr/share/man/man3m/copysignl.3m=copysign.3m
 f usr/share/man/man3m/cos.3m 0444 root bin
+s usr/share/man/man3m/cosf.3m=cos.3m
 f usr/share/man/man3m/cosh.3m 0444 root bin
+s usr/share/man/man3m/coshf.3m=cosh.3m
+s usr/share/man/man3m/coshl.3m=cosh.3m
+s usr/share/man/man3m/cosl.3m=cos.3m
 f usr/share/man/man3m/cpow.3m 0444 root bin
+s usr/share/man/man3m/cpowf.3m=cpow.3m
+s usr/share/man/man3m/cpowl.3m=cpow.3m
 f usr/share/man/man3m/cproj.3m 0444 root bin
+s usr/share/man/man3m/cprojf.3m=cproj.3m
+s usr/share/man/man3m/cprojl.3m=cproj.3m
 f usr/share/man/man3m/creal.3m 0444 root bin
+s usr/share/man/man3m/crealf.3m=creal.3m
+s usr/share/man/man3m/creall.3m=creal.3m
 f usr/share/man/man3m/csin.3m 0444 root bin
+s usr/share/man/man3m/csinf.3m=csin.3m
 f usr/share/man/man3m/csinh.3m 0444 root bin
+s usr/share/man/man3m/csinhf.3m=csinh.3m
+s usr/share/man/man3m/csinhl.3m=csinh.3m
+s usr/share/man/man3m/csinl.3m=csin.3m
 f usr/share/man/man3m/csqrt.3m 0444 root bin
+s usr/share/man/man3m/csqrtf.3m=csqrt.3m
+s usr/share/man/man3m/csqrtl.3m=csqrt.3m
 f usr/share/man/man3m/ctan.3m 0444 root bin
+s usr/share/man/man3m/ctanf.3m=ctan.3m
 f usr/share/man/man3m/ctanh.3m 0444 root bin
+s usr/share/man/man3m/ctanhf.3m=ctanh.3m
+s usr/share/man/man3m/ctanhl.3m=ctanh.3m
+s usr/share/man/man3m/ctanl.3m=ctan.3m
 f usr/share/man/man3m/erf.3m 0444 root bin
 f usr/share/man/man3m/erfc.3m 0444 root bin
+s usr/share/man/man3m/erfcf.3m=erfc.3m
+s usr/share/man/man3m/erfcl.3m=erfc.3m
+s usr/share/man/man3m/erff.3m=erf.3m
+s usr/share/man/man3m/erfl.3m=erf.3m
 f usr/share/man/man3m/exp.3m 0444 root bin
 f usr/share/man/man3m/exp2.3m 0444 root bin
+s usr/share/man/man3m/exp2f.3m=exp2.3m
+s usr/share/man/man3m/exp2l.3m=exp2.3m
+s usr/share/man/man3m/expf.3m=exp.3m
+s usr/share/man/man3m/expl.3m=exp.3m
 f usr/share/man/man3m/expm1.3m 0444 root bin
+s usr/share/man/man3m/expm1f.3m=expm1.3m
+s usr/share/man/man3m/expm1l.3m=expm1.3m
 f usr/share/man/man3m/fabs.3m 0444 root bin
+s usr/share/man/man3m/fabsf.3m=fabs.3m
+s usr/share/man/man3m/fabsl.3m=fabs.3m
 f usr/share/man/man3m/fdim.3m 0444 root bin
+s usr/share/man/man3m/fdimf.3m=fdim.3m
+s usr/share/man/man3m/fdiml.3m=fdim.3m
 f usr/share/man/man3m/feclearexcept.3m 0444 root bin
 f usr/share/man/man3m/fegetenv.3m 0444 root bin
 f usr/share/man/man3m/fegetexceptflag.3m 0444 root bin
+s usr/share/man/man3m/fegetprec.3m=fesetprec.3m
 f usr/share/man/man3m/fegetround.3m 0444 root bin
 f usr/share/man/man3m/feholdexcept.3m 0444 root bin
 f usr/share/man/man3m/feraiseexcept.3m 0444 root bin
@@ -16435,18 +16512,47 @@ f usr/share/man/man3m/fesetprec.3m 0444 root bin
 s usr/share/man/man3m/fesetround.3m=fegetround.3m
 f usr/share/man/man3m/fetestexcept.3m 0444 root bin
 f usr/share/man/man3m/feupdateenv.3m 0444 root bin
+s usr/share/man/man3m/fex_get_handling.3m=fex_set_handling.3m
+s usr/share/man/man3m/fex_get_log.3m=fex_set_log.3m
+s usr/share/man/man3m/fex_get_log_depth.3m=fex_set_log.3m
+s usr/share/man/man3m/fex_getexcepthandler.3m=fex_set_handling.3m
+s usr/share/man/man3m/fex_log_entry.3m=fex_set_log.3m
 f usr/share/man/man3m/fex_merge_flags.3m 0444 root bin
 f usr/share/man/man3m/fex_set_handling.3m 0444 root bin
 f usr/share/man/man3m/fex_set_log.3m 0444 root bin
+s usr/share/man/man3m/fex_set_log_depth.3m=fex_set_log.3m
+s usr/share/man/man3m/fex_setexcepthandler.3m=fex_set_handling.3m
 f usr/share/man/man3m/floor.3m 0444 root bin
+s usr/share/man/man3m/floorf.3m=floor.3m
+s usr/share/man/man3m/floorl.3m=floor.3m
 f usr/share/man/man3m/fma.3m 0444 root bin
+s usr/share/man/man3m/fmaf.3m=fma.3m
+s usr/share/man/man3m/fmal.3m=fma.3m
 f usr/share/man/man3m/fmax.3m 0444 root bin
+s usr/share/man/man3m/fmaxf.3m=fmax.3m
+s usr/share/man/man3m/fmaxl.3m=fmax.3m
 f usr/share/man/man3m/fmin.3m 0444 root bin
+s usr/share/man/man3m/fminf.3m=fmin.3m
+s usr/share/man/man3m/fminl.3m=fmin.3m
 f usr/share/man/man3m/fmod.3m 0444 root bin
+s usr/share/man/man3m/fmodf.3m=fmod.3m
+s usr/share/man/man3m/fmodl.3m=fmod.3m
 f usr/share/man/man3m/fpclassify.3m 0444 root bin
 f usr/share/man/man3m/frexp.3m 0444 root bin
+s usr/share/man/man3m/frexpf.3m=frexp.3m
+s usr/share/man/man3m/frexpl.3m=frexp.3m
+s usr/share/man/man3m/gamma.3m=lgamma.3m
+s usr/share/man/man3m/gamma_r.3m=lgamma.3m
+s usr/share/man/man3m/gammaf.3m=lgamma.3m
+s usr/share/man/man3m/gammaf_r.3m=lgamma.3m
+s usr/share/man/man3m/gammal.3m=lgamma.3m
+s usr/share/man/man3m/gammal_r.3m=lgamma.3m
 f usr/share/man/man3m/hypot.3m 0444 root bin
+s usr/share/man/man3m/hypotf.3m=hypot.3m
+s usr/share/man/man3m/hypotl.3m=hypot.3m
 f usr/share/man/man3m/ilogb.3m 0444 root bin
+s usr/share/man/man3m/ilogbf.3m=ilogb.3m
+s usr/share/man/man3m/ilogbl.3m=ilogb.3m
 f usr/share/man/man3m/isfinite.3m 0444 root bin
 f usr/share/man/man3m/isgreater.3m 0444 root bin
 f usr/share/man/man3m/isgreaterequal.3m 0444 root bin
@@ -16458,42 +16564,127 @@ f usr/share/man/man3m/isnan.3m 0444 root bin
 f usr/share/man/man3m/isnormal.3m 0444 root bin
 f usr/share/man/man3m/isunordered.3m 0444 root bin
 f usr/share/man/man3m/j0.3m 0444 root bin
+s usr/share/man/man3m/j0f.3m=j0.3m
+s usr/share/man/man3m/j0l.3m=j0.3m
+s usr/share/man/man3m/j1.3m=j0.3m
+s usr/share/man/man3m/j1f.3m=j0.3m
+s usr/share/man/man3m/j1l.3m=j0.3m
+s usr/share/man/man3m/jn.3m=j0.3m
+s usr/share/man/man3m/jnf.3m=j0.3m
+s usr/share/man/man3m/jnl.3m=j0.3m
 f usr/share/man/man3m/ldexp.3m 0444 root bin
+s usr/share/man/man3m/ldexpf.3m=ldexp.3m
+s usr/share/man/man3m/ldexpl.3m=ldexp.3m
 f usr/share/man/man3m/lgamma.3m 0444 root bin
+s usr/share/man/man3m/lgamma_r.3m=lgamma.3m
+s usr/share/man/man3m/lgammaf.3m=lgamma.3m
+s usr/share/man/man3m/lgammaf_r.3m=lgamma.3m
+s usr/share/man/man3m/lgammal.3m=lgamma.3m
+s usr/share/man/man3m/lgammal_r.3m=lgamma.3m
 f usr/share/man/man3m/llrint.3m 0444 root bin
+s usr/share/man/man3m/llrintf.3m=llrint.3m
+s usr/share/man/man3m/llrintl.3m=llrint.3m
 f usr/share/man/man3m/llround.3m 0444 root bin
+s usr/share/man/man3m/llroundf.3m=llround.3m
+s usr/share/man/man3m/llroundl.3m=llround.3m
 f usr/share/man/man3m/log.3m 0444 root bin
 f usr/share/man/man3m/log10.3m 0444 root bin
+s usr/share/man/man3m/log10f.3m=log10.3m
+s usr/share/man/man3m/log10l.3m=log10.3m
 f usr/share/man/man3m/log1p.3m 0444 root bin
+s usr/share/man/man3m/log1pf.3m=log1p.3m
+s usr/share/man/man3m/log1pl.3m=log1p.3m
 f usr/share/man/man3m/log2.3m 0444 root bin
+s usr/share/man/man3m/log2f.3m=log2.3m
+s usr/share/man/man3m/log2l.3m=log2.3m
 f usr/share/man/man3m/logb.3m 0444 root bin
+s usr/share/man/man3m/logbf.3m=logb.3m
+s usr/share/man/man3m/logbl.3m=logb.3m
+s usr/share/man/man3m/logf.3m=log.3m
+s usr/share/man/man3m/logl.3m=log.3m
 f usr/share/man/man3m/lrint.3m 0444 root bin
+s usr/share/man/man3m/lrintf.3m=lrint.3m
+s usr/share/man/man3m/lrintl.3m=lrint.3m
 f usr/share/man/man3m/lround.3m 0444 root bin
+s usr/share/man/man3m/lroundf.3m=lround.3m
+s usr/share/man/man3m/lroundl.3m=lround.3m
 f usr/share/man/man3m/matherr.3m 0444 root bin
 f usr/share/man/man3m/modf.3m 0444 root bin
+s usr/share/man/man3m/modff.3m=modf.3m
+s usr/share/man/man3m/modfl.3m=modf.3m
 f usr/share/man/man3m/nan.3m 0444 root bin
 s usr/share/man/man3m/nanf.3m=nan.3m
 s usr/share/man/man3m/nanl.3m=nan.3m
 f usr/share/man/man3m/nearbyint.3m 0444 root bin
+s usr/share/man/man3m/nearbyintf.3m=nearbyint.3m
+s usr/share/man/man3m/nearbyintl.3m=nearbyint.3m
 f usr/share/man/man3m/nextafter.3m 0444 root bin
+s usr/share/man/man3m/nextafterf.3m=nextafter.3m
+s usr/share/man/man3m/nextafterl.3m=nextafter.3m
+s usr/share/man/man3m/nexttoward.3m=nextafter.3m
+s usr/share/man/man3m/nexttowardf.3m=nextafter.3m
+s usr/share/man/man3m/nexttowardl.3m=nextafter.3m
 f usr/share/man/man3m/pow.3m 0444 root bin
+s usr/share/man/man3m/powf.3m=pow.3m
+s usr/share/man/man3m/powl.3m=pow.3m
 f usr/share/man/man3m/remainder.3m 0444 root bin
+s usr/share/man/man3m/remainderf.3m=remainder.3m
+s usr/share/man/man3m/remainderl.3m=remainder.3m
 f usr/share/man/man3m/remquo.3m 0444 root bin
+s usr/share/man/man3m/remquof.3m=remquo.3m
+s usr/share/man/man3m/remquol.3m=remquo.3m
 f usr/share/man/man3m/rint.3m 0444 root bin
+s usr/share/man/man3m/rintf.3m=rint.3m
+s usr/share/man/man3m/rintl.3m=rint.3m
 f usr/share/man/man3m/round.3m 0444 root bin
+s usr/share/man/man3m/roundf.3m=round.3m
+s usr/share/man/man3m/roundl.3m=round.3m
 f usr/share/man/man3m/scalb.3m 0444 root bin
+s usr/share/man/man3m/scalbf.3m=scalb.3m
+s usr/share/man/man3m/scalbl.3m=scalb.3m
 f usr/share/man/man3m/scalbln.3m 0444 root bin
+s usr/share/man/man3m/scalblnf.3m=scalbln.3m
+s usr/share/man/man3m/scalblnl.3m=scalbln.3m
+s usr/share/man/man3m/scalbn.3m=scalbln.3m
+s usr/share/man/man3m/scalbnf.3m=scalbln.3m
+s usr/share/man/man3m/scalbnl.3m=scalbln.3m
 f usr/share/man/man3m/signbit.3m 0444 root bin
 f usr/share/man/man3m/significand.3m 0444 root bin
+s usr/share/man/man3m/significandf.3m=significand.3m
+s usr/share/man/man3m/significandl.3m=significand.3m
 f usr/share/man/man3m/sin.3m 0444 root bin
 f usr/share/man/man3m/sincos.3m 0444 root bin
+s usr/share/man/man3m/sincosf.3m=sincos.3m
+s usr/share/man/man3m/sincosl.3m=sincos.3m
+s usr/share/man/man3m/sinf.3m=sin.3m
 f usr/share/man/man3m/sinh.3m 0444 root bin
+s usr/share/man/man3m/sinhf.3m=sinh.3m
+s usr/share/man/man3m/sinhl.3m=sinh.3m
+s usr/share/man/man3m/sinl.3m=sin.3m
 f usr/share/man/man3m/sqrt.3m 0444 root bin
+s usr/share/man/man3m/sqrtf.3m=sqrt.3m
+s usr/share/man/man3m/sqrtl.3m=sqrt.3m
 f usr/share/man/man3m/tan.3m 0444 root bin
+s usr/share/man/man3m/tanf.3m=tan.3m
 f usr/share/man/man3m/tanh.3m 0444 root bin
+s usr/share/man/man3m/tanhf.3m=tanh.3m
+s usr/share/man/man3m/tanhl.3m=tanh.3m
+s usr/share/man/man3m/tanl.3m=tan.3m
 f usr/share/man/man3m/tgamma.3m 0444 root bin
+s usr/share/man/man3m/tgammaf.3m=tgamma.3m
+s usr/share/man/man3m/tgammal.3m=tgamma.3m
 f usr/share/man/man3m/trunc.3m 0444 root bin
+s usr/share/man/man3m/truncf.3m=trunc.3m
+s usr/share/man/man3m/truncl.3m=trunc.3m
 f usr/share/man/man3m/y0.3m 0444 root bin
+s usr/share/man/man3m/y0f.3m=y0.3m
+s usr/share/man/man3m/y0l.3m=y0.3m
+s usr/share/man/man3m/y1.3m=y0.3m
+s usr/share/man/man3m/y1f.3m=y0.3m
+s usr/share/man/man3m/y1l.3m=y0.3m
+s usr/share/man/man3m/yn.3m=y0.3m
+s usr/share/man/man3m/ynf.3m=y0.3m
+s usr/share/man/man3m/ynl.3m=y0.3m
 d usr/share/man/man3mail 0755 root bin
 f usr/share/man/man3mail/maillock.3mail 0444 root bin
 s usr/share/man/man3mail/mailunlock.3mail=maillock.3mail
@@ -19251,8 +19442,8 @@ f usr/share/man/man7d/blkdev.7d 0444 root bin
 f usr/share/man/man7d/bnxe.7d 0444 root bin
 f usr/share/man/man7d/chxge.7d 0444 root bin
 f usr/share/man/man7d/cmdk.7d 0444 root bin
-f usr/share/man/man7d/cpqary3.7d 0444 root bin
 f usr/share/man/man7d/coretemp.7d 0444 root bin
+f usr/share/man/man7d/cpqary3.7d 0444 root bin
 f usr/share/man/man7d/cpuid.7d 0444 root bin
 f usr/share/man/man7d/devinfo.7d 0444 root bin
 f usr/share/man/man7d/dmfe.7d 0444 root bin
@@ -20193,16 +20384,16 @@ s usr/share/man/man9f/ddi_taskq_wait.9f=taskq.9f
 s usr/share/man/man9f/ddi_trigger_softintr.9f=ddi_add_softintr.9f
 f usr/share/man/man9f/ddi_ufm.9f 0444 root bin
 s usr/share/man/man9f/ddi_ufm_fini.9f=ddi_ufm.9f
-s usr/share/man/man9f/ddi_ufm_init.9f=ddi_ufm.9f
-s usr/share/man/man9f/ddi_ufm_update.9f=ddi_ufm.9f
 f usr/share/man/man9f/ddi_ufm_image.9f 0444 root bin
 s usr/share/man/man9f/ddi_ufm_image_set_desc.9f=ddi_ufm_image.9f
 s usr/share/man/man9f/ddi_ufm_image_set_misc.9f=ddi_ufm_image.9f
 s usr/share/man/man9f/ddi_ufm_image_set_nslots.9f=ddi_ufm_image.9f
+s usr/share/man/man9f/ddi_ufm_init.9f=ddi_ufm.9f
 f usr/share/man/man9f/ddi_ufm_slot.9f 0444 root bin
 s usr/share/man/man9f/ddi_ufm_slot_set_attrs.9f=ddi_ufm_slot.9f
 s usr/share/man/man9f/ddi_ufm_slot_set_misc.9f=ddi_ufm_slot.9f
 s usr/share/man/man9f/ddi_ufm_slot_set_version.9f=ddi_ufm_slot.9f
+s usr/share/man/man9f/ddi_ufm_update.9f=ddi_ufm.9f
 f usr/share/man/man9f/ddi_umem_alloc.9f 0444 root bin
 s usr/share/man/man9f/ddi_umem_free.9f=ddi_umem_alloc.9f
 f usr/share/man/man9f/ddi_umem_iosetup.9f 0444 root bin
