@@ -459,56 +459,16 @@ viona_rx_common(viona_vring_t *ring, mblk_t *mp, boolean_t is_loopback)
 	mblk_t *mpdrop = NULL, **mpdrop_prevp = &mpdrop;
 	const boolean_t do_merge =
 	    ((link->l_features & VIRTIO_NET_F_MRG_RXBUF) != 0);
-	const boolean_t guest_csum =
-	    ((link->l_features & VIRTIO_NET_F_GUEST_CSUM) != 0);
-	const boolean_t guest_tso4 =
-	    ((link->l_features & VIRTIO_NET_F_GUEST_TSO4) != 0);
 
 	size_t nrx = 0, ndrop = 0;
 
-	/*
-	 * The mac_hw_emul() function, by design, doesn't predicate on
-	 * HW_LOCAL_MAC. Since we are in Rx context we know that any
-	 * LSO packet must also be from a same-machine sender. We take
-	 * advantage of that and forgoe writing a manual loop to
-	 * predicate on HW_LOCAL_MAC.
-	 *
-	 * For checksum emulation we need to predicate on HW_LOCAL_MAC
-	 * to avoid calling mac_hw_emul() on packets that don't need
-	 * it (thanks to the fact that HCK_IPV4_HDRCKSUM and
-	 * HCK_IPV4_HDRCKSUM_OK use the same value). Therefore, we do
-	 * the checksum emulation in the second loop.
-	 */
-	if (!guest_tso4)
-		mac_hw_emul(&mp, NULL, NULL, MAC_LSO_EMUL);
-
 	while (mp != NULL) {
-		mblk_t *next, *pad = NULL;
-		size_t size;
+		mblk_t *next = mp->b_next;
+		mblk_t *pad = NULL;
+		size_t size = msgsize(mp);
 		int err = 0;
 
-		next = mp->b_next;
 		mp->b_next = NULL;
-
-		if (DB_CKSUMFLAGS(mp) & HW_LOCAL_MAC) {
-			/*
-			 * The VIRTIO_NET_HDR_F_DATA_VALID flag only
-			 * covers the ULP checksum -- so we still have
-			 * to populate the IP header checksum.
-			 */
-			if (guest_csum) {
-				mac_hw_emul(&mp, NULL, NULL, MAC_IPCKSUM_EMUL);
-			} else {
-				mac_hw_emul(&mp, NULL, NULL, MAC_HWCKSUM_EMUL);
-			}
-
-			if (mp == NULL) {
-				mp = next;
-				continue;
-			}
-		}
-
-		size = msgsize(mp);
 
 		/*
 		 * We treat both a 'drop' response and errors the same here
