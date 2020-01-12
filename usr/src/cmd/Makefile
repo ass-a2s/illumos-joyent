@@ -83,6 +83,7 @@ COMMON_SUBDIRS=		\
 	cal		\
 	captoinfo	\
 	cat		\
+	ccidadm		\
 	cdrw		\
 	cfgadm		\
 	checkeq		\
@@ -249,6 +250,7 @@ COMMON_SUBDIRS=		\
 	logger		\
 	login		\
 	logins		\
+	logname		\
 	look		\
 	ls		\
 	luxadm		\
