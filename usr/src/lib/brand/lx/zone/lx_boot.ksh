@@ -21,8 +21,8 @@
 #
 #
 # Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
-# Copyright 2020 Joyent, Inc.
 # Copyright 2017 ASS-Einrichtungssysteme GmbH, Inc.
+# Copyright 2020 Joyent, Inc.
 #
 # lx boot script.
 #
@@ -85,12 +85,6 @@ elif [[ -f $ZONEROOT/etc/SuSE-release ]]; then
 	distro="suse"
 elif [[ -f $ZONEROOT/etc/void-release ]]; then
 	distro="void"
-elif [[ -f $ZONEROOT/etc/arch-release ]]; then
-	distro="arch"
-elif [[ -f $ZONEROOT/etc/nixos-release ]]; then
-	distro="nixos"
-elif [[ -f $ZONEROOT/etc/oracle-release ]]; then
-	distro="oracle"
 fi
 
 [[ -z $distro ]] && fatal "Unsupported distribution!"
