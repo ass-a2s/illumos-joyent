@@ -26,12 +26,6 @@
 
 #include <sys/asm_linkage.h>
 
-#if defined(__lint)
-
-char stubs_base[1], stubs_end[1];
-
-#else	/* __lint */
-
 #include "assym.h"
 
 /*
@@ -1317,9 +1311,9 @@ fcnname/**/_info:							\
 	END_MODULE(ppt);
 #endif
 
-/ this is just a marker for the area of text that contains stubs
-
+/*
+ * this is just a marker for the area of text that contains stubs
+ */
 	ENTRY_NP(stubs_end)
 	nop
 
-#endif	/* lint */

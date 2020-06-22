@@ -28,6 +28,7 @@
 
 /*
  * Copyright 2018 Joyent, Inc.
+ * Copyright 2020 Oxide Computer Company
  */
 
 #include <sys/cdefs.h>
@@ -76,7 +77,8 @@ __FBSDID("$FreeBSD$");
 #include "npt.h"
 
 SYSCTL_DECL(_hw_vmm);
-SYSCTL_NODE(_hw_vmm, OID_AUTO, svm, CTLFLAG_RW, NULL, NULL);
+SYSCTL_NODE(_hw_vmm, OID_AUTO, svm, CTLFLAG_RW | CTLFLAG_MPSAFE, NULL,
+    NULL);
 
 /*
  * SVM CPUID function 0x8000_000A, edx bit decoding.
@@ -110,11 +112,6 @@ SYSCTL_INT(_hw_vmm_svm, OID_AUTO, vmcb_clean, CTLFLAG_RDTUN, &vmcb_clean,
 
 static MALLOC_DEFINE(M_SVM, "svm", "svm");
 static MALLOC_DEFINE(M_SVM_VLAPIC, "svm-vlapic", "svm-vlapic");
-
-#ifdef __FreeBSD__
-/* Per-CPU context area. */
-extern struct pcpu __pcpu[];
-#endif
 
 static uint32_t svm_feature = ~0U;	/* AMD SVM features. */
 SYSCTL_UINT(_hw_vmm_svm, OID_AUTO, features, CTLFLAG_RDTUN, &svm_feature, 0,
@@ -1518,11 +1515,8 @@ svm_vmexit(struct svm_softc *svm_sc, int vcpu, struct vm_exit *vmexit)
 		break;
 	case VMCB_EXIT_CPUID:
 		vmm_stat_incr(svm_sc->vm, vcpu, VMEXIT_CPUID, 1);
-		handled = x86_emulate_cpuid(svm_sc->vm, vcpu,
-		    (uint32_t *)&state->rax,
-		    (uint32_t *)&ctx->sctx_rbx,
-		    (uint32_t *)&ctx->sctx_rcx,
-		    (uint32_t *)&ctx->sctx_rdx);
+		handled = x86_emulate_cpuid(svm_sc->vm, vcpu, &state->rax,
+		    &ctx->sctx_rbx, &ctx->sctx_rcx, &ctx->sctx_rdx);
 		break;
 	case VMCB_EXIT_HLT:
 		vmm_stat_incr(svm_sc->vm, vcpu, VMEXIT_HLT, 1);
@@ -2162,11 +2156,7 @@ svm_vmrun(void *arg, int vcpu, register_t rip, pmap_t pmap,
 		/* Launch Virtual Machine. */
 		VCPU_CTR1(vm, vcpu, "Resume execution at %#lx", state->rip);
 		svm_dr_enter_guest(gctx);
-#ifdef __FreeBSD__
-		svm_launch(vmcb_pa, gctx, &__pcpu[curcpu]);
-#else
-		svm_launch(vmcb_pa, gctx, CPU);
-#endif
+		svm_launch(vmcb_pa, gctx, get_pcpu());
 		svm_dr_leave_guest(gctx);
 
 		CPU_CLR_ATOMIC(curcpu, &pmap->pm_active);
@@ -2307,6 +2297,11 @@ svm_setreg(void *arg, int vcpu, int ident, uint64_t val)
 		return (0);
 	}
 
+	if (ident == VM_REG_GUEST_ENTRY_INST_LENGTH) {
+		/* Ignore. */
+		return (0);
+	}
+
 	/*
 	 * XXX deal with CR3 and invalidate TLB entries tagged with the
 	 * vcpu's ASID. This needs to be treated differently depending on
@@ -2422,25 +2417,24 @@ svm_restorectx(void *arg, int vcpu)
 #endif /* __FreeBSD__ */
 
 struct vmm_ops vmm_ops_amd = {
-	svm_init,
-	svm_cleanup,
-	svm_restore,
-	svm_vminit,
-	svm_vmrun,
-	svm_vmcleanup,
-	svm_getreg,
-	svm_setreg,
-	vmcb_getdesc,
-	vmcb_setdesc,
-	svm_getcap,
-	svm_setcap,
-	svm_npt_alloc,
-	svm_npt_free,
-	svm_vlapic_init,
-	svm_vlapic_cleanup,
-
+	.init		= svm_init,
+	.cleanup	= svm_cleanup,
+	.resume		= svm_restore,
+	.vminit		= svm_vminit,
+	.vmrun		= svm_vmrun,
+	.vmcleanup	= svm_vmcleanup,
+	.vmgetreg	= svm_getreg,
+	.vmsetreg	= svm_setreg,
+	.vmgetdesc	= vmcb_getdesc,
+	.vmsetdesc	= vmcb_setdesc,
+	.vmgetcap	= svm_getcap,
+	.vmsetcap	= svm_setcap,
+	.vmspace_alloc	= svm_npt_alloc,
+	.vmspace_free	= svm_npt_free,
+	.vlapic_init	= svm_vlapic_init,
+	.vlapic_cleanup	= svm_vlapic_cleanup,
 #ifndef __FreeBSD__
-	svm_savectx,
-	svm_restorectx,
+	.vmsavectx	= svm_savectx,
+	.vmrestorectx	= svm_restorectx,
 #endif
 };

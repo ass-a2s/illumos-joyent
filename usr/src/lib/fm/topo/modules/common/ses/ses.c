@@ -23,7 +23,7 @@
  * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2012 Milan Jurik. All rights reserved.
  * Copyright 2015 Nexenta Systems, Inc.  All rights reserved.
- * Copyright (c) 2020, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 #include <alloca.h>
@@ -65,6 +65,8 @@ static int ses_snap_freq = 250;		/* in milliseconds */
 	((s) == SES_ESC_UNSUPPORTED || (s) >= SES_ESC_NOT_INSTALLED)
 
 #define	HR_SECOND   1000000000
+
+#define	SES_INST_NOTSET		UINT64_MAX
 
 /*
  * Because multiple SES targets can be part of a single chassis, we construct
@@ -225,14 +227,6 @@ typedef enum {
 	SES_DUP_CHASSIS		= 0x4,
 	SES_DUP_SUBCHASSIS	= 0x8
 } ses_chassis_type_e;
-
-
-static const topo_pgroup_info_t storage_pgroup = {
-	TOPO_PGROUP_STORAGE,
-	TOPO_STABILITY_PRIVATE,
-	TOPO_STABILITY_PRIVATE,
-	1
-};
 
 static const topo_pgroup_info_t smp_pgroup = {
 	TOPO_PGROUP_SMP,
@@ -3174,7 +3168,7 @@ ses_create_chassis(ses_enum_data_t *sdp, tnode_t *pnode, ses_enum_chassis_t *cp)
 			goto error;
 	}
 
-	if (cp->sec_maxinstance >= 0 &&
+	if (cp->sec_maxinstance != SES_INST_NOTSET &&
 	    (topo_node_range_create(mod, tn, SUBCHASSIS, 0,
 	    cp->sec_maxinstance) != 0)) {
 		topo_mod_dprintf(mod, "topo_node_create_range() failed: %s",
@@ -3413,7 +3407,7 @@ ses_enum_gather(ses_node_t *np, void *data)
 				goto error;
 
 			cp->sec_scinstance = SES_STARTING_SUBCHASSIS;
-			cp->sec_maxinstance = -1;
+			cp->sec_maxinstance = SES_INST_NOTSET;
 			cp->sec_csn = csn;
 
 			if (subchassis == NO_SUBCHASSIS) {

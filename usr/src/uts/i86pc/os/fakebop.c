@@ -1039,6 +1039,7 @@ xen_vbdroot_props(char *s)
 	short minor;
 	long addr = 0;
 
+	mi = '\0';
 	pnp = vbdpath + strlen(vbdpath);
 	prop_p = s + strlen(lnamefix);
 	while ((*prop_p != '\0') && (*prop_p != 's') && (*prop_p != 'p'))
@@ -2411,6 +2412,7 @@ find_fw_table(ACPI_TABLE_RSDP *rsdp, char *signature)
 	 * use the XSDT.  If the XSDT address is 0, though, fall back to
 	 * revision 1 and use the RSDT.
 	 */
+	xsdt_addr = 0;
 	if (revision == 0) {
 		if (rsdp == NULL)
 			return (NULL);
@@ -2926,8 +2928,10 @@ build_firmware_properties(struct xboot_info *xbp)
 	tp = find_fw_table(rsdp, ACPI_SIG_MCFG);
 #else /* __xpv */
 	enumerate_xen_cpus();
-	if (DOMAIN_IS_INITDOMAIN(xen_info))
+	if (DOMAIN_IS_INITDOMAIN(xen_info)) {
+		rsdp = find_rsdp(xbp);
 		tp = find_fw_table(rsdp, ACPI_SIG_MCFG);
+	}
 #endif /* __xpv */
 	if (tp != NULL)
 		process_mcfg((ACPI_TABLE_MCFG *)tp);

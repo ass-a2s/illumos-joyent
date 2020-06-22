@@ -44,6 +44,7 @@ _MANFILES=	aac.7d		\
 		devinfo.7d	\
 		dmfe.7d		\
 		dtrace.7d	\
+		e1000g.7d	\
 		ehci.7d		\
 		fasttrap.7d	\
 		fbt.7d		\
@@ -216,6 +217,7 @@ i386_MANFILES=	ahci.7d		\
 		iwi.7d		\
 		iwn.7d		\
 		mega_sas.7d	\
+		mlxcx.7d	\
 		npe.7d		\
 		ntxn.7d		\
 		nv_sata.7d	\

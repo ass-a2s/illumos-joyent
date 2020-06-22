@@ -11,7 +11,7 @@
 
 #
 # Copyright (c) 2012 by Delphix. All rights reserved.
-# Copyright 2019 Joyent, Inc.
+# Copyright 2020 Joyent, Inc.
 #
 
 [DEFAULT]
@@ -63,6 +63,10 @@ tests = ['tmpfs_badmount', 'tmpfs_enospc']
 user = root
 tests = ['dladm-kstat']
 
+[/opt/os-tests/tests/timer]
+user = root
+tests = ['timer_limit']
+
 [/opt/os-tests/tests/file-locking]
 tests = ['runtests.32', 'runtests.64']
 
@@ -98,3 +102,21 @@ arch = i86pc
 [/opt/os-tests/tests/uccid]
 arch = i86pc
 tests = ['atrparse']
+
+[/opt/os-tests/tests/writev.32]
+[/opt/os-tests/tests/writev.64]
+
+[/opt/os-tests/tests/imc_test]
+arch = i86pc
+
+#
+# Except atrparse all tests require special hardware (CCID YubiKey) to run,
+# hence they aren't included in the default runfile.
+#
+[/opt/os-tests/tests/uccid]
+arch = i86pc
+tests = ['atrparse']
+
+[/opt/os-tests/tests/libtopo]
+user = root
+tests = ['digraph-test']

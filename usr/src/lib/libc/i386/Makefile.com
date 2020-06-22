@@ -686,6 +686,7 @@ PORTSTDIO=			\
 	_filbuf.o		\
 	_findbuf.o		\
 	_flsbuf.o		\
+	_stdio_flags.o		\
 	_wrtchk.o		\
 	clearerr.o		\
 	ctermid.o		\
@@ -701,6 +702,7 @@ PORTSTDIO=			\
 	fileno.o		\
 	flockf.o		\
 	flush.o			\
+	fmemopen.o		\
 	fopen.o			\
 	fpos.o			\
 	fputc.o			\
@@ -718,6 +720,8 @@ PORTSTDIO=			\
 	gets.o			\
 	getw.o			\
 	mse.o			\
+	open_memstream.o	\
+	open_wmemstream.o	\
 	popen.o			\
 	putc.o			\
 	putchar.o		\
@@ -790,6 +794,8 @@ PORTI18N_COND=			\
 PORTLOCALE=			\
 	big5.o			\
 	btowc.o			\
+	c16rtomb.o		\
+	c32rtomb.o		\
 	collate.o		\
 	collcmp.o		\
 	euc.o			\
@@ -815,6 +821,8 @@ PORTLOCALE=			\
 	mbftowc.o		\
 	mblen.o			\
 	mbrlen.o		\
+	mbrtoc16.o		\
+	mbrtoc32.o		\
 	mbrtowc.o		\
 	mbsinit.o		\
 	mbsnrtowcs.o		\

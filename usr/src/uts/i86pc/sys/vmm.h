@@ -108,6 +108,7 @@ enum vm_reg_name {
 	VM_REG_GUEST_DR2,
 	VM_REG_GUEST_DR3,
 	VM_REG_GUEST_DR6,
+	VM_REG_GUEST_ENTRY_INST_LENGTH,
 	VM_REG_LAST
 };
 
@@ -127,10 +128,39 @@ enum x2apic_state {
 #define	VM_INTINFO_HWEXCEPTION	(3 << 8)
 #define	VM_INTINFO_SWINTR	(4 << 8)
 
-
-#define	VM_MAX_NAMELEN	32
+#ifndef __FreeBSD__
+/*
+ * illumos doesn't have a limitation based on SPECNAMELEN like FreeBSD does.
+ * Instead of picking an arbitrary value we will just rely on the same
+ * calculation that's made below. If this calculation ever changes we need to
+ * update the the VM_MAX_NAMELEN mapping in the bhyve brand's boot.c file.
+ */
+#else
+/*
+ * The VM name has to fit into the pathname length constraints of devfs,
+ * governed primarily by SPECNAMELEN.  The length is the total number of
+ * characters in the full path, relative to the mount point and not 
+ * including any leading '/' characters.
+ * A prefix and a suffix are added to the name specified by the user.
+ * The prefix is usually "vmm/" or "vmm.io/", but can be a few characters
+ * longer for future use.
+ * The suffix is a string that identifies a bootrom image or some similar
+ * image that is attached to the VM. A separator character gets added to
+ * the suffix automatically when generating the full path, so it must be
+ * accounted for, reducing the effective length by 1.
+ * The effective length of a VM name is 229 bytes for FreeBSD 13 and 37
+ * bytes for FreeBSD 12.  A minimum length is set for safety and supports
+ * a SPECNAMELEN as small as 32 on old systems.
+ */
+#endif
+#define VM_MAX_PREFIXLEN 10
+#define VM_MAX_SUFFIXLEN 15
+#define VM_MIN_NAMELEN   6
+#define VM_MAX_NAMELEN \
+    (SPECNAMELEN - VM_MAX_PREFIXLEN - VM_MAX_SUFFIXLEN - 1)
 
 #ifdef _KERNEL
+CTASSERT(VM_MAX_NAMELEN >= VM_MIN_NAMELEN);
 
 struct vm;
 struct vm_exception;
@@ -309,12 +339,12 @@ vcpu_reqidle(struct vm_eventinfo *info)
 int vcpu_debugged(struct vm *vm, int vcpuid);
 
 /*
- * Return 1 if device indicated by bus/slot/func is supposed to be a
+ * Return true if device indicated by bus/slot/func is supposed to be a
  * pci passthrough device.
  *
- * Return 0 otherwise.
+ * Return false otherwise.
  */
-int vmm_is_pptdev(int bus, int slot, int func);
+bool vmm_is_pptdev(int bus, int slot, int func);
 
 void *vm_iommu_domain(struct vm *vm);
 
@@ -451,6 +481,7 @@ enum vm_cap_type {
 	VM_CAP_PAUSE_EXIT,
 	VM_CAP_UNRESTRICTED_GUEST,
 	VM_CAP_ENABLE_INVPCID,
+	VM_CAP_BPT_EXIT,
 	VM_CAP_MAX
 };
 
@@ -509,6 +540,8 @@ struct vie_op {
 	uint8_t		op_type;	/* type of operation (e.g. MOV) */
 	uint16_t	op_flags;
 };
+_Static_assert(sizeof(struct vie_op) == 4, "ABI");
+_Static_assert(_Alignof(struct vie_op) == 2, "ABI");
 
 #define	VIE_INST_SIZE	15
 struct vie {
@@ -533,13 +566,22 @@ struct vie {
 			rm:4;
 
 	uint8_t		ss:2,			/* SIB byte */
-			index:4,
-			base:4;
+			vex_present:1,		/* VEX prefixed */
+			vex_l:1,		/* L bit */
+			index:4,		/* SIB byte */
+			base:4;			/* SIB byte */
 
 	uint8_t		disp_bytes;
 	uint8_t		imm_bytes;
 
 	uint8_t		scale;
+
+	uint8_t		vex_reg:4,		/* vvvv: first source register specifier */
+			vex_pp:2,		/* pp */
+			_sparebits:2;
+
+	uint8_t		_sparebytes[2];
+
 	int		base_register;		/* VM_REG_GUEST_xyz */
 	int		index_register;		/* VM_REG_GUEST_xyz */
 	int		segment_register;	/* VM_REG_GUEST_xyz */
@@ -549,8 +591,14 @@ struct vie {
 
 	uint8_t		decoded;	/* set to 1 if successfully decoded */
 
+	uint8_t		_sparebyte;
+
 	struct vie_op	op;			/* opcode description */
 };
+_Static_assert(sizeof(struct vie) == 64, "ABI");
+_Static_assert(__offsetof(struct vie, disp_bytes) == 22, "ABI");
+_Static_assert(__offsetof(struct vie, scale) == 24, "ABI");
+_Static_assert(__offsetof(struct vie, base_register) == 28, "ABI");
 
 enum vm_exitcode {
 	VM_EXITCODE_INOUT,
@@ -576,6 +624,7 @@ enum vm_exitcode {
 	VM_EXITCODE_REQIDLE,
 	VM_EXITCODE_DEBUG,
 	VM_EXITCODE_VMINSN,
+	VM_EXITCODE_BPT,
 #ifndef	__FreeBSD__
 	VM_EXITCODE_HT,
 #endif
@@ -665,6 +714,9 @@ struct vm_exit {
 			uint64_t	exitinfo1;
 			uint64_t	exitinfo2;
 		} svm;
+		struct {
+			int		inst_length;
+		} bpt;
 		struct {
 			uint32_t	code;		/* ecx value */
 			uint64_t	wval;

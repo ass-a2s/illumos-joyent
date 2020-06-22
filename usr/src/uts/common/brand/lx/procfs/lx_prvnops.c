@@ -470,6 +470,8 @@ typedef struct lxpr_rlimtab {
 	char	*rlim_rctl;	/* rctl source */
 } lxpr_rlimtab_t;
 
+#define RLIM_MAXFD	"Max open files"
+
 static lxpr_rlimtab_t lxpr_rlimtab[] = {
 	{ "Max cpu time",	"seconds",	"process.max-cpu-time" },
 	{ "Max file size",	"bytes",	"process.max-file-size" },
@@ -478,7 +480,7 @@ static lxpr_rlimtab_t lxpr_rlimtab[] = {
 	{ "Max core file size",	"bytes",	"process.max-core-size" },
 	{ "Max resident set",	"bytes",	"zone.max-physical-memory" },
 	{ "Max processes",	"processes",	"zone.max-lwps" },
-	{ "Max open files",	"files",	"process.max-file-descriptor" },
+	{ RLIM_MAXFD,		"files",	"process.max-file-descriptor" },
 	{ "Max locked memory",	"bytes",	"zone.max-locked-memory" },
 	{ "Max address space",	"bytes",	"process.max-address-space" },
 	{ "Max file locks",	"locks",	NULL },
@@ -1730,6 +1732,14 @@ lxpr_read_pid_limits(lxpr_node_t *lxpnp, lxpr_uiobuf_t *uiobuf)
 				break;
 			}
 		}
+		/*
+		 * If "Max open files" is still set to RLIM_INFINITY, make it
+		 * match the max value so that we do not output "unlimited".
+		 */
+		if (strcmp(lxpr_rlimtab[i].rlim_name, RLIM_MAXFD) == 0 &&
+		    cur[i] == RLIM_INFINITY)
+		    cur[i] = max[i];
+
 	}
 	lxpr_unlock(p);
 
@@ -3989,24 +3999,32 @@ lxpr_read_meminfo(lxpr_node_t *lxpnp, lxpr_uiobuf_t *uiobuf)
 	 * wing it and kill a random process if they run out of backing store
 	 * for virtual memory. Our swap reservation doesn't translate to that
 	 * model, so just inform the caller that no swap is being used.
+	 *
+	 * MemAvailable
+	 * MemAvailable entry is available since Linux Kernel +3.14, is an 
+	 * estimate of how much memory is available for starting new applications, 
+	 * without swapping. In lxbrand we will always return the available free 
+	 * memory as an estimate of this value.
 	 */
 	lxpr_uiobuf_printf(uiobuf,
-	    "MemTotal:  %8lu kB\n"
-	    "MemFree:   %8lu kB\n"
-	    "MemShared: %8u kB\n"
-	    "Buffers:   %8u kB\n"
-	    "Cached:    %8u kB\n"
-	    "SwapCached:%8u kB\n"
-	    "Active:    %8u kB\n"
-	    "Inactive:  %8u kB\n"
-	    "HighTotal: %8u kB\n"
-	    "HighFree:  %8u kB\n"
-	    "LowTotal:  %8u kB\n"
-	    "LowFree:   %8u kB\n"
-	    "SwapTotal: %8lu kB\n"
-	    "SwapFree:  %8lu kB\n",
+	    "MemTotal:       %8lu kB\n"
+	    "MemFree:        %8lu kB\n"
+	    "MemAvailable:   %8lu kB\n"
+	    "MemShared:      %8u kB\n"
+	    "Buffers:        %8u kB\n"
+	    "Cached:         %8u kB\n"
+	    "SwapCached:     %8u kB\n"
+	    "Active:         %8u kB\n"
+	    "Inactive:       %8u kB\n"
+	    "HighTotal:      %8u kB\n"
+	    "HighFree:       %8u kB\n"
+	    "LowTotal:       %8u kB\n"
+	    "LowFree:        %8u kB\n"
+	    "SwapTotal:      %8lu kB\n"
+	    "SwapFree:       %8lu kB\n",
 	    btok(total_mem),				/* MemTotal */
 	    btok(free_mem),				/* MemFree */
+	    btok(free_mem),				/* MemAvailable */
 	    0,						/* MemShared */
 	    0,						/* Buffers */
 	    0,						/* Cached */

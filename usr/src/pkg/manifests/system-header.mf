@@ -26,7 +26,7 @@
 # Copyright 2014 Garrett D'Amore <garrett@damore.org>
 # Copyright 2018 Nexenta Systems, Inc.
 # Copyright 2016 Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
-# Copyright 2019 Joyent, Inc.
+# Copyright 2020 Joyent, Inc.
 # Copyright 2019 Peter Tribble.
 #
 
@@ -1027,6 +1027,7 @@ file path=usr/include/sys/fs/pc_label.h
 file path=usr/include/sys/fs/pc_node.h
 file path=usr/include/sys/fs/pxfs_ki.h
 file path=usr/include/sys/fs/sdev_impl.h
+file path=usr/include/sys/fs/sdev_plugin.h
 file path=usr/include/sys/fs/snode.h
 file path=usr/include/sys/fs/swapnode.h
 file path=usr/include/sys/fs/tmp.h
@@ -1170,6 +1171,7 @@ file path=usr/include/sys/lc_core.h
 file path=usr/include/sys/ldterm.h
 file path=usr/include/sys/lgrp.h
 file path=usr/include/sys/lgrp_user.h
+file path=usr/include/sys/limits.h
 file path=usr/include/sys/link.h
 file path=usr/include/sys/linker_set.h
 file path=usr/include/sys/list.h
@@ -1603,6 +1605,7 @@ file path=usr/include/time.h
 file path=usr/include/tiuser.h
 file path=usr/include/tsol/label.h
 file path=usr/include/tzfile.h
+file path=usr/include/uchar.h
 file path=usr/include/ucontext.h
 file path=usr/include/ucred.h
 file path=usr/include/uid_stp.h
@@ -1909,6 +1912,7 @@ file path=usr/share/man/man3head/timeb.h.3head
 file path=usr/share/man/man3head/times.h.3head
 file path=usr/share/man/man3head/types.h.3head
 file path=usr/share/man/man3head/types32.h.3head
+file path=usr/share/man/man3head/uchar.h.3head
 file path=usr/share/man/man3head/ucontext.h.3head
 file path=usr/share/man/man3head/uio.h.3head
 file path=usr/share/man/man3head/ulimit.h.3head
