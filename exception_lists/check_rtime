@@ -74,7 +74,6 @@ SKIP		^opt/libc-tests/tests/stdio/
 # Objects that are allowed to have executable data segments
 EXEC_DATA	^MACH(lib)/ld\.so\.1$
 EXEC_DATA	^lib/libc\.so\.1$	# 6524709, 32-bit, needed for x86 only
-EXEC_DATA	^MACH(lib)/libumem\.so\.1$ # ptcumem
 EXEC_DATA	^opt/SUNWdtrt/tst/.*/ustack/tst\.helper\.exe$
 EXEC_DATA	^platform/.*/MACH(kernel)/unix$
 
@@ -163,7 +162,7 @@ UNREF_OBJ	/lib.*\ of\ .*libpq\.so\.4
 UNREF_OBJ	/lib.*\ of\ .*libpython2\.4\.so\.1\.0
 UNREF_OBJ	/lib.*\ of\ .*libpython2\.6\.so\.1\.0
 UNREF_OBJ	/lib.*\ of\ .*libpython2\.7\.so\.1\.0
-UNREF_OBJ	/lib.*\ of\ .*libpython3\.[5678]m?\.so\.1\.0
+UNREF_OBJ	/lib.*\ of\ .*libpython3\.[56789]m?\.so\.1\.0
 UNREF_OBJ	/libgcc_s.*\ of\ .*libstdc\+\+\.so\.6
 UNREF_OBJ	/libgcc_s.*\ of\ .*libgmodule-2\.0\.so\.0
 
@@ -276,11 +275,16 @@ NO_COMMENT	^usr/lib/inet/amd64/in\.iked
 NO_COMMENT	^usr/lib/inet/certdb
 NO_COMMENT	^usr/lib/inet/certlocal
 NO_COMMENT	^usr/lib/inet/certrldb
+NO_COMMENT	^usr/lib/inet/sparcv9/in\.iked
 NO_COMMENT	^usr/lib/labeld
 NO_COMMENT	^usr/lib/libike\.so\.1
 NO_COMMENT	^usr/lib/mdb/kvm/amd64/mpt\.so
 NO_COMMENT	^usr/lib/mdb/kvm/amd64/nfs\.so
+NO_COMMENT	^usr/lib/mdb/kvm/sparcv9/mpt\.so
+NO_COMMENT	^usr/lib/mdb/kvm/sparcv9/nfs\.so
 NO_COMMENT	^usr/lib/raidcfg/amd64/mpt\.so\.1
 NO_COMMENT	^usr/lib/raidcfg/mpt\.so\.1
+NO_COMMENT	^usr/lib/raidcfg/sparcv9/mpt\.so\.1
+NO_COMMENT	^usr/lib/sparcv9/libike\.so\.1
 NO_COMMENT	^usr/sbin/chk_encodings
 NO_COMMENT	^usr/xpg4/bin/more

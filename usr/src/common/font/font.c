@@ -88,22 +88,22 @@ const text_cmap_t cmap4_to_24 = {
 /* END CSTYLED */
 
 static uint32_t
-rgb_to_color(const rgb_t *rgb, uint8_t r, uint8_t g, uint8_t b)
+rgb_to_color(const rgb_t *rgb, uint32_t r, uint32_t g, uint32_t b)
 {
 	uint32_t color;
 	int pos, size;
 
 	pos = rgb->red.pos;
 	size = rgb->red.size;
-	color = ((r >> (8 - size)) & ((1 << size) - 1)) << pos;
+	color = ((r * ((1 << size) - 1)) / 0xff) << pos;
 
 	pos = rgb->green.pos;
 	size = rgb->green.size;
-	color |= ((g >> (8 - size)) & ((1 << size) - 1)) << pos;
+	color |= (((g * ((1 << size) - 1)) / 0xff) << pos);
 
 	pos = rgb->blue.pos;
 	size = rgb->blue.size;
-	color |= ((b >> (8 - size)) & ((1 << size) - 1)) << pos;
+	color |= (((b * ((1 << size) - 1)) / 0xff) << pos);
 
 	return (color);
 }
@@ -222,7 +222,8 @@ set_font(short *rows, short *cols, short h, short w)
 		font = fl->font_data;
 		if ((((*rows * font->height) + BORDER_PIXELS) <= height) &&
 		    (((*cols * font->width) + BORDER_PIXELS) <= width)) {
-			if (font->font == NULL) {
+			if (font->font == NULL ||
+			    fl->font_flags == FONT_RELOAD) {
 				if (fl->font_load != NULL &&
 				    fl->font_name != NULL) {
 					font = fl->font_load(fl->font_name);

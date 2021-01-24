@@ -74,20 +74,17 @@ static SYSCTL_NODE(_hw_vmm, OID_AUTO, topology, CTLFLAG_RD | CTLFLAG_MPSAFE, 0,
 
 static const char bhyve_id[12] = "bhyve bhyve ";
 
+/* Number of times an unknown cpuid leaf was accessed */
 static uint64_t bhyve_xcpuids;
-SYSCTL_ULONG(_hw_vmm, OID_AUTO, bhyve_xcpuids, CTLFLAG_RW, &bhyve_xcpuids, 0,
-    "Number of times an unknown cpuid leaf was accessed");
 
 static int cpuid_leaf_b = 1;
-SYSCTL_INT(_hw_vmm_topology, OID_AUTO, cpuid_leaf_b, CTLFLAG_RDTUN,
-    &cpuid_leaf_b, 0, NULL);
 
 /*
  * Round up to the next power of two, if necessary, and then take log2.
  * Returns -1 if argument is zero.
  */
 static __inline int
-log2(u_int x)
+log2(uint_t x)
 {
 
 	return (fls(x << (1 - powerof2(x))) - 1);
@@ -173,7 +170,8 @@ x86_emulate_cpuid(struct vm *vm, int vcpu_id, uint64_t *rax, uint64_t *rbx,
 				if (width < 0x4)
 					width = 0;
 				logical_cpus = MIN(0xFF, threads * cores - 1);
-				regs[2] = (width << AMDID_COREID_SIZE_SHIFT) | logical_cpus;
+				regs[2] = (width << AMDID_COREID_SIZE_SHIFT) |
+				    logical_cpus;
 			}
 			break;
 
@@ -331,7 +329,7 @@ x86_emulate_cpuid(struct vm *vm, int vcpu_id, uint64_t *rax, uint64_t *rbx,
 			error = vm_get_x2apic_state(vm, vcpu_id, &x2apic_state);
 			if (error) {
 				panic("x86_emulate_cpuid: error %d "
-				      "fetching x2apic state", error);
+				    "fetching x2apic state", error);
 			}
 
 			/*
@@ -372,7 +370,7 @@ x86_emulate_cpuid(struct vm *vm, int vcpu_id, uint64_t *rax, uint64_t *rbx,
 				    VM_REG_GUEST_CR4, &cr4);
 				if (error)
 					panic("x86_emulate_cpuid: error %d "
-					      "fetching %%cr4", error);
+					    "fetching %%cr4", error);
 				if (cr4 & CR4_XSAVE)
 					regs[2] |= CPUID2_OSXSAVE;
 			}
@@ -383,7 +381,7 @@ x86_emulate_cpuid(struct vm *vm, int vcpu_id, uint64_t *rax, uint64_t *rbx,
 			 */
 			regs[2] &= ~CPUID2_MON;
 
-                        /*
+			/*
 			 * Hide the performance and debug features.
 			 */
 			regs[2] &= ~CPUID2_PDCM;
@@ -585,6 +583,24 @@ x86_emulate_cpuid(struct vm *vm, int vcpu_id, uint64_t *rax, uint64_t *rbx,
 				}
 				break;
 			}
+			break;
+
+		case CPUID_0000_000F:
+		case CPUID_0000_0010:
+			/*
+			 * Do not report any Resource Director Technology
+			 * capabilities.  Exposing control of cache or memory
+			 * controller resource partitioning to the guest is not
+			 * at all sensible.
+			 *
+			 * This is already hidden at a high level by masking of
+			 * leaf 0x7.  Even still, a guest may look here for
+			 * detailed capability information.
+			 */
+			regs[0] = 0;
+			regs[1] = 0;
+			regs[2] = 0;
+			regs[3] = 0;
 			break;
 
 		case CPUID_0000_0015:

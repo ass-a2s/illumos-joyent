@@ -12,6 +12,7 @@
 #
 # Copyright 2014 Pluribus Networks Inc.
 # Copyright 2020 Joyent, Inc.
+# Copyright 2020 Oxide Computer Company
 #
 
 PROG =		bhyve
@@ -74,7 +75,6 @@ SRCS =	acpi.c			\
 	usb_mouse.c		\
 	vga.c			\
 	virtio.c		\
-	vmm_instruction_emul.c	\
 	vmgenc.c		\
 	xmsr.c			\
 	spinup_ap.c		\
@@ -138,8 +138,17 @@ SMOFF += all_func_returns,leaks,no_if_block
 CSTD=		$(CSTD_GNU99)
 C99MODE=	-xc99=%all
 
-$(PROG) := LDLIBS += -lsocket -lnsl -ldlpi -ldladm -lmd -lsunw_crypto -luuid \
-	-lvmmapi -lz
+$(PROG) := LDLIBS += \
+	-lsocket \
+	-lnsl \
+	-ldlpi \
+	-ldladm \
+	-lmd \
+	-lsunw_crypto \
+	-luuid \
+	-lvmmapi \
+	-lz
+NATIVE_LIBS += libz.so libsunw_crypto.so
 $(ZHYVE_PROG) := LDLIBS += -lnvpair
 $(MEVENT_TEST_PROG) := LDLIBS += -lsocket
 

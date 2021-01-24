@@ -47,6 +47,7 @@ include ../Makefile.master
 
 # Build libc and its dependencies
 SUBDIRS=			\
+	ssp_ns			\
 	crt			\
 	../cmd/sgs/libconv	\
 	../cmd/sgs/libdl	\
@@ -227,7 +228,6 @@ SUBDIRS +=				\
 	libstmfproxy	\
 	libsum		\
 	libsun_ima	\
-	libsys		\
 	libsysevent	\
 	libtecla	\
 	libtermcap	\
@@ -252,6 +252,7 @@ SUBDIRS +=				\
 	libxnet		\
 	libzdoor	\
 	libzfs		\
+	libzfsbootenv	\
 	libzfs_core	\
 	libzfs_jni	\
 	libzonecfg	\
@@ -591,7 +592,8 @@ basedeps :=	TARGET=install
 
 # The following dependencies are currently required by libdbus-1 and should
 # be used for anything linking against it.
-dbusdeps:	libsecdb libtsol libinetutil libscf libuutil libgen libsmbios
+dbusdeps:	libsecdb libtsol libinetutil libscf libuutil libgen libsmbios \
+		libbsm
 
 # The following dependencies don't need to be listed below as they are built
 # before everything else:
@@ -614,7 +616,8 @@ krb5:		gss_mechs/mech_krb5 libtecla libldap5
 libads:		libnsl
 libadt_jni:	libbsm
 libadutils:	libldap5 libresolv2
-libbe:		libzfs libinstzones libuuid libgen libdevinfo libefi libficl
+libbe:		libzfs libinstzones libuuid libgen libdevinfo libefi libficl \
+		libzfsbootenv
 libbsm:		libinetutil libscf libsecdb libtsol
 libbunyan:	libumem
 libcfgadm:	libdevinfo
@@ -719,6 +722,7 @@ libvscan:	libscf libsecdb
 libzdoor:	libc libzonecfg libcontract
 libzfs:		libdevid libgen libuutil libavl libefi libidmap \
 		libumem libtsol libzfs_core libcryptoutil pkcs11 libmd libzutil
+libzfsbootenv:	libzfs libnvpair
 libzfs_core:	libnvpair
 libzfs_jni:	libdiskmgt libzfs libzutil
 libzonecfg:	libuuid libsysevent libsec libbrand libpool libscf libproc \

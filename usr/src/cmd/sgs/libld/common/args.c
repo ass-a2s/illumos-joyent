@@ -325,11 +325,6 @@ check_flags(Ofl_desc * ofl, int argc)
 		if (otype == OT_RELOC) {
 			if (dflag == SET_UNKNOWN)
 				dflag = SET_FALSE;
-			if ((dflag == SET_TRUE) &&
-			    OFL_GUIDANCE(ofl, FLG_OFG_NO_KMOD)) {
-				ld_eprintf(ofl, ERR_GUIDANCE,
-				    MSG_INTL(MSG_GUIDE_KMOD));
-			}
 		} else if (otype == OT_KMOD) {
 			if (dflag != SET_UNKNOWN) {
 				ld_eprintf(ofl, ERR_FATAL,
@@ -921,8 +916,8 @@ guidance_parse(Ofl_desc *ofl, char *optarg)
 					if (strcasecmp(name, item->name) == 0)
 						break;
 				if (item->name == NULL) {
-					DBG_CALL(Dbg_args_guidance_unknown(
-					    ofl->ofl_lml, name));
+					ld_eprintf(ofl, ERR_GUIDANCE,
+					    MSG_INTL(MSG_GUIDE_UNKNOWN), name);
 					continue;
 				}
 				ofl_guideflags |= item->flag;

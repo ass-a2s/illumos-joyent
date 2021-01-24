@@ -39,6 +39,7 @@
  *
  * Copyright 2015 Pluribus Networks Inc.
  * Copyright 2018 Joyent, Inc.
+ * Copyright 2020 Oxide Computer Company
  */
 
 #include <sys/cdefs.h>
@@ -216,6 +217,7 @@ static cpuset_t cpumask;
 static void vm_loop(struct vmctx *ctx, int vcpu, uint64_t rip);
 
 static struct vm_exit vmexit[VM_MAXCPU];
+static struct vm_entry vmentry[VM_MAXCPU];
 
 struct bhyvestats {
 	uint64_t	vmexit_bogus;
@@ -223,15 +225,18 @@ struct bhyvestats {
 	uint64_t	vmexit_hlt;
 	uint64_t	vmexit_pause;
 	uint64_t	vmexit_mtrap;
-	uint64_t	vmexit_inst_emul;
+	uint64_t	vmexit_mmio;
+	uint64_t	vmexit_inout;
 	uint64_t	cpu_switch_rotate;
 	uint64_t	cpu_switch_direct;
+	uint64_t	mmio_unhandled;
 } stats;
 
 struct mt_vmm_info {
 	pthread_t	mt_thr;
 	struct vmctx	*mt_ctx;
-	int		mt_vcpu;	
+	int		mt_vcpu;
+	uint64_t	mt_startrip;
 } mt_vmm_info[VM_MAXCPU];
 
 #ifdef	__FreeBSD__
@@ -440,7 +445,6 @@ pincpu_parse(const char *opt)
 	CPU_SET(pcpu, vcpumap[vcpu]);
 	return (0);
 }
-#endif
 
 void
 vm_inject_fault(void *arg, int vcpu, int vector, int errcode_valid,
@@ -456,6 +460,7 @@ vm_inject_fault(void *arg, int vcpu, int vector, int errcode_valid,
 	    restart_instruction);
 	assert(error == 0);
 }
+#endif /* __FreeBSD__ */
 
 void *
 paddr_guest2host(struct vmctx *ctx, uintptr_t gaddr, size_t len)
@@ -501,7 +506,7 @@ fbsdrun_start_thread(void *param)
 	if (gdb_port != 0)
 		gdb_cpu_add(vcpu);
 
-	vm_loop(mtp->mt_ctx, vcpu, vmexit[vcpu].rip);
+	vm_loop(mtp->mt_ctx, vcpu, mtp->mt_startrip);
 
 	/* not reached */
 	exit(1);
@@ -513,13 +518,14 @@ void
 fbsdrun_addcpu(struct vmctx *ctx, int fromcpu, int newcpu, uint64_t rip)
 #else
 void
-fbsdrun_addcpu(struct vmctx *ctx, int fromcpu, int newcpu, uint64_t rip,
-    bool suspend)
+fbsdrun_addcpu(struct vmctx *ctx, int newcpu, uint64_t rip, bool suspend)
 #endif
 {
 	int error;
 
+#ifdef __FreeBSD__
 	assert(fromcpu == BSP);
+#endif
 
 	/*
 	 * The 'newcpu' must be activated in the context of 'fromcpu'. If
@@ -542,11 +548,9 @@ fbsdrun_addcpu(struct vmctx *ctx, int fromcpu, int newcpu, uint64_t rip,
 	 * Set up the vmexit struct to allow execution to start
 	 * at the given RIP
 	 */
-	vmexit[newcpu].rip = rip;
-	vmexit[newcpu].inst_length = 0;
-
 	mt_vmm_info[newcpu].mt_ctx = ctx;
 	mt_vmm_info[newcpu].mt_vcpu = newcpu;
+	mt_vmm_info[newcpu].mt_startrip = rip;
 
 	error = pthread_create(&mt_vmm_info[newcpu].mt_thr, NULL,
 	    fbsdrun_start_thread, &mt_vmm_info[newcpu]);
@@ -566,6 +570,66 @@ fbsdrun_deletecpu(struct vmctx *ctx, int vcpu)
 	return (CPU_EMPTY(&cpumask));
 }
 
+static void
+vmentry_mmio_read(int vcpu, uint64_t gpa, uint8_t bytes, uint64_t data)
+{
+	struct vm_entry *entry = &vmentry[vcpu];
+	struct vm_mmio *mmio = &entry->u.mmio;
+
+	assert(entry->cmd == VEC_DEFAULT);
+
+	entry->cmd = VEC_FULFILL_MMIO;
+	mmio->bytes = bytes;
+	mmio->read = 1;
+	mmio->gpa = gpa;
+	mmio->data = data;
+}
+
+static void
+vmentry_mmio_write(int vcpu, uint64_t gpa, uint8_t bytes)
+{
+	struct vm_entry *entry = &vmentry[vcpu];
+	struct vm_mmio *mmio = &entry->u.mmio;
+
+	assert(entry->cmd == VEC_DEFAULT);
+
+	entry->cmd = VEC_FULFILL_MMIO;
+	mmio->bytes = bytes;
+	mmio->read = 0;
+	mmio->gpa = gpa;
+	mmio->data = 0;
+}
+
+static void
+vmentry_inout_read(int vcpu, uint16_t port, uint8_t bytes, uint32_t data)
+{
+	struct vm_entry *entry = &vmentry[vcpu];
+	struct vm_inout *inout = &entry->u.inout;
+
+	assert(entry->cmd == VEC_DEFAULT);
+
+	entry->cmd = VEC_FULFILL_INOUT;
+	inout->bytes = bytes;
+	inout->flags = INOUT_IN;
+	inout->port = port;
+	inout->eax = data;
+}
+
+static void
+vmentry_inout_write(int vcpu, uint16_t port, uint8_t bytes)
+{
+	struct vm_entry *entry = &vmentry[vcpu];
+	struct vm_inout *inout = &entry->u.inout;
+
+	assert(entry->cmd == VEC_DEFAULT);
+
+	entry->cmd = VEC_FULFILL_INOUT;
+	inout->bytes = bytes;
+	inout->flags = 0;
+	inout->port = port;
+	inout->eax = 0;
+}
+
 static int
 vmexit_handle_notify(struct vmctx *ctx, struct vm_exit *vme, int *pvcpu,
 		     uint32_t eax)
@@ -582,30 +646,42 @@ static int
 vmexit_inout(struct vmctx *ctx, struct vm_exit *vme, int *pvcpu)
 {
 	int error;
-	int bytes, port, in, out;
 	int vcpu;
+	struct vm_inout inout;
+	bool in;
+	uint8_t bytes;
+
+	stats.vmexit_inout++;
 
 	vcpu = *pvcpu;
-
-	port = vme->u.inout.port;
-	bytes = vme->u.inout.bytes;
-	in = vme->u.inout.in;
-	out = !in;
+	inout = vme->u.inout;
+	in = (inout.flags & INOUT_IN) != 0;
+	bytes = inout.bytes;
 
         /* Extra-special case of host notifications */
-        if (out && port == GUEST_NIO_PORT) {
-                error = vmexit_handle_notify(ctx, vme, pvcpu, vme->u.inout.eax);
+        if (!in && inout.port == GUEST_NIO_PORT) {
+                error = vmexit_handle_notify(ctx, vme, pvcpu, inout.eax);
+		vmentry_inout_write(vcpu, inout.port, bytes);
 		return (error);
 	}
 
-	error = emulate_inout(ctx, vcpu, vme, strictio);
+	error = emulate_inout(ctx, vcpu, &inout, strictio != 0);
 	if (error) {
 		fprintf(stderr, "Unhandled %s%c 0x%04x at 0x%lx\n",
 		    in ? "in" : "out",
 		    bytes == 1 ? 'b' : (bytes == 2 ? 'w' : 'l'),
-		    port, vmexit->rip);
+		    inout.port, vmexit->rip);
 		return (VMEXIT_ABORT);
 	} else {
+		/*
+		 * Communicate the status of the inout operation back to the
+		 * in-kernel instruction emulation.
+		 */
+		if (in) {
+			vmentry_inout_read(vcpu, inout.port, bytes, inout.eax);
+		} else {
+			vmentry_inout_write(vcpu, inout.port, bytes);
+		}
 		return (VMEXIT_CONTINUE);
 	}
 }
@@ -656,6 +732,7 @@ vmexit_wrmsr(struct vmctx *ctx, struct vm_exit *vme, int *pvcpu)
 	return (VMEXIT_CONTINUE);
 }
 
+#ifdef __FreeBSD__
 static int
 vmexit_spinup_ap(struct vmctx *ctx, struct vm_exit *vme, int *pvcpu)
 {
@@ -665,8 +742,25 @@ vmexit_spinup_ap(struct vmctx *ctx, struct vm_exit *vme, int *pvcpu)
 
 	return (VMEXIT_CONTINUE);
 }
+#else
+static int
+vmexit_run_state(struct vmctx *ctx, struct vm_exit *vme, int *pvcpu)
+{
+	/*
+	 * Run-state transitions (INIT, SIPI, etc) are handled in-kernel, so an
+	 * exit to userspace with that code is not expected.
+	 */
+	fprintf(stderr, "unexpected run-state VM exit");
+	return (VMEXIT_ABORT);
+}
+#endif /* __FreeBSD__ */
 
+#ifdef __FreeBSD__
 #define	DEBUG_EPT_MISCONFIG
+#else
+/* EPT misconfig debugging not possible now that raw VMCS access is gone */
+#endif
+
 #ifdef DEBUG_EPT_MISCONFIG
 #define	VMCS_GUEST_PHYSICAL_ADDRESS	0x00002400
 
@@ -795,29 +889,70 @@ vmexit_mtrap(struct vmctx *ctx, struct vm_exit *vmexit, int *pvcpu)
 static int
 vmexit_inst_emul(struct vmctx *ctx, struct vm_exit *vmexit, int *pvcpu)
 {
-	int err, i;
-	struct vie *vie;
+	uint8_t i, valid;
 
-	stats.vmexit_inst_emul++;
+	fprintf(stderr, "Failed to emulate instruction sequence ");
 
-	vie = &vmexit->u.inst_emul.vie;
-	err = emulate_mem(ctx, *pvcpu, vmexit->u.inst_emul.gpa,
-	    vie, &vmexit->u.inst_emul.paging);
-
-	if (err) {
-		if (err == ESRCH) {
-			EPRINTLN("Unhandled memory access to 0x%lx\n",
-			    vmexit->u.inst_emul.gpa);
+	valid = vmexit->u.inst_emul.num_valid;
+	if (valid != 0) {
+		assert(valid <= sizeof (vmexit->u.inst_emul.inst));
+		fprintf(stderr, "[");
+		for (i = 0; i < valid; i++) {
+			if (i == 0) {
+				fprintf(stderr, "%02x",
+				    vmexit->u.inst_emul.inst[i]);
+			} else {
+				fprintf(stderr, ", %02x",
+				    vmexit->u.inst_emul.inst[i]);
+			}
 		}
+		fprintf(stderr, "] ");
+	}
+	fprintf(stderr, "@ %rip = %x\n", vmexit->rip);
 
-		fprintf(stderr, "Failed to emulate instruction sequence [ ");
-		for (i = 0; i < vie->num_valid; i++)
-			fprintf(stderr, "%02x", vie->inst[i]);
-		FPRINTLN(stderr, " ] at 0x%lx", vmexit->rip);
-		return (VMEXIT_ABORT);
+	return (VMEXIT_ABORT);
+}
+
+static int
+vmexit_mmio(struct vmctx *ctx, struct vm_exit *vmexit, int *pvcpu)
+{
+	int vcpu, err;
+	struct vm_mmio mmio;
+	bool is_read;
+
+	stats.vmexit_mmio++;
+
+	vcpu = *pvcpu;
+	mmio = vmexit->u.mmio;
+	is_read = (mmio.read != 0);
+
+	err = emulate_mem(ctx, vcpu, &mmio);
+
+	if (err == ESRCH) {
+		fprintf(stderr, "Unhandled memory access to 0x%lx\n", mmio.gpa);
+		stats.mmio_unhandled++;
+
+		/*
+		 * Access to non-existent physical addresses is not likely to
+		 * result in fatal errors on hardware machines, but rather reads
+		 * of all-ones or discarded-but-acknowledged writes.
+		 */
+		mmio.data = ~0UL;
+		err = 0;
 	}
 
-	return (VMEXIT_CONTINUE);
+	if (err == 0) {
+		if (is_read) {
+			vmentry_mmio_read(vcpu, mmio.gpa, mmio.bytes,
+			    mmio.data);
+		} else {
+			vmentry_mmio_write(vcpu, mmio.gpa, mmio.bytes);
+		}
+		return (VMEXIT_CONTINUE);
+	}
+
+	fprintf(stderr, "Unhandled mmio error to 0x%lx: %d\n", mmio.gpa, err);
+	return (VMEXIT_ABORT);
 }
 
 static pthread_mutex_t resetcpu_mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -887,7 +1022,7 @@ vmexit_breakpoint(struct vmctx *ctx, struct vm_exit *vmexit, int *pvcpu)
 
 static vmexit_handler_t handler[VM_EXITCODE_MAX] = {
 	[VM_EXITCODE_INOUT]  = vmexit_inout,
-	[VM_EXITCODE_INOUT_STR]  = vmexit_inout,
+	[VM_EXITCODE_MMIO]  = vmexit_mmio,
 	[VM_EXITCODE_VMX]    = vmexit_vmx,
 	[VM_EXITCODE_SVM]    = vmexit_svm,
 	[VM_EXITCODE_BOGUS]  = vmexit_bogus,
@@ -896,7 +1031,11 @@ static vmexit_handler_t handler[VM_EXITCODE_MAX] = {
 	[VM_EXITCODE_WRMSR]  = vmexit_wrmsr,
 	[VM_EXITCODE_MTRAP]  = vmexit_mtrap,
 	[VM_EXITCODE_INST_EMUL] = vmexit_inst_emul,
+#ifdef __FreeBSD__
 	[VM_EXITCODE_SPINUP_AP] = vmexit_spinup_ap,
+#else
+	[VM_EXITCODE_RUN_STATE] = vmexit_run_state,
+#endif
 	[VM_EXITCODE_SUSPENDED] = vmexit_suspend,
 	[VM_EXITCODE_TASK_SWITCH] = vmexit_task_switch,
 	[VM_EXITCODE_DEBUG] = vmexit_debug,
@@ -909,6 +1048,8 @@ vm_loop(struct vmctx *ctx, int vcpu, uint64_t startrip)
 	int error, rc;
 	enum vm_exitcode exitcode;
 	cpuset_t active_cpus;
+	struct vm_exit *vexit;
+	struct vm_entry *ventry;
 
 #ifdef	__FreeBSD__
 	if (vcpumap[vcpu] != NULL) {
@@ -923,19 +1064,30 @@ vm_loop(struct vmctx *ctx, int vcpu, uint64_t startrip)
 	error = vm_set_register(ctx, vcpu, VM_REG_GUEST_RIP, startrip);
 	assert(error == 0);
 
+	ventry = &vmentry[vcpu];
+	vexit = &vmexit[vcpu];
+
 	while (1) {
-		error = vm_run(ctx, vcpu, &vmexit[vcpu]);
+		error = vm_run(ctx, vcpu, ventry, vexit);
 		if (error != 0)
 			break;
 
-		exitcode = vmexit[vcpu].exitcode;
+		if (ventry->cmd != VEC_DEFAULT) {
+			/*
+			 * Discard any lingering entry state after it has been
+			 * submitted via vm_run().
+			 */
+			bzero(ventry, sizeof (*ventry));
+		}
+
+		exitcode = vexit->exitcode;
 		if (exitcode >= VM_EXITCODE_MAX || handler[exitcode] == NULL) {
 			fprintf(stderr, "vm_loop: unexpected exitcode 0x%x\n",
 			    exitcode);
 			exit(4);
 		}
 
-		rc = (*handler[exitcode])(ctx, &vmexit[vcpu], &vcpu);
+		rc = (*handler[exitcode])(ctx, vexit, &vcpu);
 
 		switch (rc) {
 		case VMEXIT_CONTINUE:
@@ -952,6 +1104,7 @@ vm_loop(struct vmctx *ctx, int vcpu, uint64_t startrip)
 static int
 num_vcpus_allowed(struct vmctx *ctx)
 {
+#ifdef __FreeBSD__
 	int tmp, error;
 
 	error = vm_get_capability(ctx, BSP, VM_CAP_UNRESTRICTED_GUEST, &tmp);
@@ -964,6 +1117,10 @@ num_vcpus_allowed(struct vmctx *ctx)
 		return (VM_MAXCPU);
 	else
 		return (1);
+#else
+	/* Unrestricted Guest is always enabled on illumos */
+	return (VM_MAXCPU);
+#endif /* __FreeBSD__ */
 }
 
 void
@@ -1312,6 +1469,9 @@ main(int argc, char *argv[])
 
 	rtc_init(ctx, rtc_localtime);
 	sci_init(ctx);
+#ifndef	__FreeBSD__
+	pmtmr_init(ctx);
+#endif
 
 	/*
 	 * Exit if a device emulation finds an error in its initilization
@@ -1331,8 +1491,20 @@ main(int argc, char *argv[])
 	if (dbg_port != 0)
 		init_dbgport(dbg_port);
 
+#ifdef __FreeBSD__
 	if (gdb_port != 0)
 		init_gdb(ctx, gdb_port, gdb_stop);
+#else
+	if (gdb_port < 0) {
+		/*
+		 * Set up the internal gdb state needed for basic debugging, but
+		 * skip the step of listening on a port for the GDB server.
+		 */
+		init_mdb(ctx, gdb_stop);
+	} else if (gdb_port != 0) {
+		init_gdb(ctx, gdb_port, gdb_stop);
+	}
+#endif
 
 	if (bvmcons)
 		init_bvmcons();
@@ -1340,11 +1512,15 @@ main(int argc, char *argv[])
 	vga_init(1);
 
 	if (lpc_bootrom()) {
+#ifdef __FreeBSD__
 		if (vm_set_capability(ctx, BSP, VM_CAP_UNRESTRICTED_GUEST, 1)) {
 			fprintf(stderr, "ROM boot failed: unrestricted guest "
 			    "capability not available\n");
 			exit(4);
 		}
+#else
+		/* Unrestricted Guest is always enabled on illumos */
+#endif
 		error = vcpu_reset(ctx, BSP);
 		assert(error == 0);
 	}
@@ -1389,14 +1565,21 @@ main(int argc, char *argv[])
 		errx(EX_OSERR, "cap_enter() failed");
 #endif
 
+#ifdef __FreeBSD__
 	/*
 	 * Add CPU 0
 	 */
-#ifdef __FreeBSD__
 	fbsdrun_addcpu(ctx, BSP, BSP, rip);
 #else
-	fbsdrun_addcpu(ctx, BSP, BSP, rip, suspend);
+	/* Set BSP to run (unlike the APs which wait for INIT) */
+	error = vm_set_run_state(ctx, BSP, VRS_RUN, 0);
+	assert(error == 0);
+	fbsdrun_addcpu(ctx, BSP, rip, suspend);
 
+	/* Add subsequent CPUs, which will wait until INIT/SIPI-ed */
+	for (uint_t i = 1; i < guest_ncpus; i++) {
+		spinup_halted_ap(ctx, i);
+	}
 	mark_provisioned();
 #endif
 

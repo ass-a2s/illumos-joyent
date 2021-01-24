@@ -39,6 +39,7 @@
  *
  * Copyright 2015 Pluribus Networks Inc.
  * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Oxide Computer Company
  */
 
 #include <sys/cdefs.h>
@@ -70,9 +71,6 @@ __FBSDID("$FreeBSD$");
 
 #include <machine/vmm.h>
 #include <machine/vmm_dev.h>
-#ifndef	__FreeBSD__
-#include <sys/vmm_impl.h>
-#endif
 
 #include "vmmapi.h"
 
@@ -774,17 +772,16 @@ vm_get_register_set(struct vmctx *ctx, int vcpu, unsigned int count,
 }
 
 int
-vm_run(struct vmctx *ctx, int vcpu, struct vm_exit *vmexit)
+vm_run(struct vmctx *ctx, int vcpu, const struct vm_entry *vm_entry,
+    struct vm_exit *vm_exit)
 {
-	int error;
-	struct vm_run vmrun;
+	struct vm_entry entry;
 
-	bzero(&vmrun, sizeof(vmrun));
-	vmrun.cpuid = vcpu;
+	bcopy(vm_entry, &entry, sizeof (entry));
+	entry.cpuid = vcpu;
+	entry.exit_data = vm_exit;
 
-	error = ioctl(ctx->fd, VM_RUN, &vmrun);
-	bcopy(&vmrun.vm_exit, vmexit, sizeof(struct vm_exit));
-	return (error);
+	return (ioctl(ctx->fd, VM_RUN, &entry));
 }
 
 int
@@ -818,6 +815,25 @@ vm_inject_exception(struct vmctx *ctx, int vcpu, int vector, int errcode_valid,
 
 	return (ioctl(ctx->fd, VM_INJECT_EXCEPTION, &exc));
 }
+
+#ifndef __FreeBSD__
+void
+vm_inject_fault(struct vmctx *ctx, int vcpu, int vector, int errcode_valid,
+    int errcode)
+{
+	int error;
+	struct vm_exception exc;
+
+	exc.cpuid = vcpu;
+	exc.vector = vector;
+	exc.error_code = errcode;
+	exc.error_code_valid = errcode_valid;
+	exc.restart_instruction = 1;
+	error = ioctl(ctx->fd, VM_INJECT_EXCEPTION, &exc);
+
+	assert(error == 0);
+}
+#endif /* __FreeBSD__ */
 
 int
 vm_apicid2vcpu(struct vmctx *ctx, int apicid)
@@ -988,7 +1004,9 @@ static const char *capstrmap[] = {
 	[VM_CAP_HALT_EXIT]  = "hlt_exit",
 	[VM_CAP_MTRAP_EXIT] = "mtrap_exit",
 	[VM_CAP_PAUSE_EXIT] = "pause_exit",
+#ifdef __FreeBSD__
 	[VM_CAP_UNRESTRICTED_GUEST] = "unrestricted_guest",
+#endif
 	[VM_CAP_ENABLE_INVPCID] = "enable_invpcid",
 	[VM_CAP_BPT_EXIT] = "bpt_exit",
 };
@@ -1284,6 +1302,18 @@ vm_set_x2apic_state(struct vmctx *ctx, int vcpu, enum x2apic_state state)
 	return (error);
 }
 
+#ifndef __FreeBSD__
+int
+vcpu_reset(struct vmctx *vmctx, int vcpu)
+{
+	struct vm_vcpu_reset vvr;
+
+	vvr.vcpuid = vcpu;
+	vvr.kind = VRK_RESET;
+
+	return (ioctl(vmctx->fd, VM_RESET_CPU, &vvr));
+}
+#else /* __FreeBSD__ */
 /*
  * From Intel Vol 3a:
  * Table 9-1. IA-32 Processor States Following Power-up, Reset or INIT
@@ -1440,6 +1470,7 @@ vcpu_reset(struct vmctx *vmctx, int vcpu)
 done:
 	return (error);
 }
+#endif /* __FreeBSD__ */
 
 int
 vm_get_gpa_pmap(struct vmctx *ctx, uint64_t gpa, uint64_t *pte, int *num)
@@ -1808,6 +1839,12 @@ vm_get_device_fd(struct vmctx *ctx)
 
 #ifndef __FreeBSD__
 int
+vm_pmtmr_set_location(struct vmctx *ctx, uint16_t ioport)
+{
+	return (ioctl(ctx->fd, VM_PMTMR_LOCATE, ioport));
+}
+
+int
 vm_wrlock_cycle(struct vmctx *ctx)
 {
 	if (ioctl(ctx->fd, VM_WRLOCK_CYCLE, 0) != 0) {
@@ -1815,6 +1852,39 @@ vm_wrlock_cycle(struct vmctx *ctx)
 	}
 	return (0);
 }
+
+int
+vm_get_run_state(struct vmctx *ctx, int vcpu, enum vcpu_run_state *state,
+    uint8_t *sipi_vector)
+{
+	struct vm_run_state data;
+
+	data.vcpuid = vcpu;
+	if (ioctl(ctx->fd, VM_GET_RUN_STATE, &data) != 0) {
+		return (errno);
+	}
+
+	*state = data.state;
+	*sipi_vector = data.sipi_vector;
+	return (0);
+}
+
+int
+vm_set_run_state(struct vmctx *ctx, int vcpu, enum vcpu_run_state state,
+    uint8_t sipi_vector)
+{
+	struct vm_run_state data;
+
+	data.vcpuid = vcpu;
+	data.state = state;
+	data.sipi_vector = sipi_vector;
+	if (ioctl(ctx->fd, VM_SET_RUN_STATE, &data) != 0) {
+		return (errno);
+	}
+
+	return (0);
+}
+
 #endif /* __FreeBSD__ */
 
 #ifdef __FreeBSD__
