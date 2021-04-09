@@ -21,7 +21,7 @@
 /*
  * echo [arg...]
  * print [-nrps] [-f format] [-u filenum] [arg...]
- * printf  format [arg...]
+ * printf [--] format [arg...]
  *
  *   David Korn
  *   AT&T Labs
@@ -198,6 +198,15 @@ int    b_print(int argc, char *argv[], Shbltin_t *context)
 			argv++;
 			goto skip;
 		}
+		argv++;
+		 /*
+		  * POSIX says: Standard utilities that do not accept options,
+		  * but that do accept operands, shall recognise "--" as a
+		  * first argument to be discarded.
+		  */
+		if (argv[0] != NULL && strcmp(argv[0], "--") == 0)
+			argv++;
+		goto printf;
 	}
 	while((n = optget(argv,options))) switch(n)
 	{
@@ -273,6 +282,7 @@ int    b_print(int argc, char *argv[], Shbltin_t *context)
 			break;
 	}
 	argv += opt_info.index;
+printf:
 	if(error_info.errors || (argc<0 && !(format = *argv++)))
 		errormsg(SH_DICT,ERROR_usage(2),"%s",optusage((char*)0));
 	if(vflag && format)

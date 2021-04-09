@@ -38,8 +38,8 @@
  * http://www.illumos.org/license/CDDL.
  *
  * Copyright 2015 Pluribus Networks Inc.
- * Copyright 2018 Joyent, Inc.
- * Copyright 2020 Oxide Computer Company
+ * Copyright 2021 Joyent, Inc.
+ * Copyright 2021 Oxide Computer Company
  */
 
 #include <sys/cdefs.h>
@@ -196,6 +196,7 @@ struct vm {
 	uint16_t	threads;		/* (o) num of threads/core */
 	uint16_t	maxcpus;		/* (o) max pluggable cpus */
 	uint64_t	boot_tsc_offset;	/* (i) TSC offset at VM boot */
+	size_t		arc_resv;		/* # of pages take from ARC */
 
 	struct ioport_config ioports;		/* (o) ioport handling */
 };
@@ -287,6 +288,9 @@ static int vcpu_vector_sipi(struct vm *vm, int vcpuid, uint8_t vector);
 #ifndef __FreeBSD__
 static void vm_clear_memseg(struct vm *, int);
 
+extern int arc_virt_machine_reserve(size_t);
+extern void arc_virt_machine_release(size_t);
+
 /* Flags for vtc_status */
 #define	VTCS_FPU_RESTORED	1 /* guest FPU restored, host FPU saved */
 #define	VTCS_FPU_CTX_CRITICAL	2 /* in ctx where FPU restore cannot be lazy */
@@ -296,6 +300,7 @@ typedef struct vm_thread_ctx {
 	int		vtc_vcpuid;
 	uint_t		vtc_status;
 } vm_thread_ctx_t;
+
 #endif /* __FreeBSD__ */
 
 #ifdef KTR
@@ -645,6 +650,12 @@ vm_cleanup(struct vm *vm, bool destroy)
 
 		VMSPACE_FREE(vm->vmspace);
 		vm->vmspace = NULL;
+
+#ifndef __FreeBSD__
+		arc_virt_machine_release(vm->arc_resv);
+		vm->arc_resv = 0;
+#endif
+
 	}
 #ifndef __FreeBSD__
 	else {
@@ -1615,9 +1626,10 @@ vm_handle_mmio_emul(struct vm *vm, int vcpuid)
 			return (error);
 		} else if (fault) {
 			/*
-			 * If a fault during instruction fetch was encounted, it
-			 * will have asserted that the appropriate exception be
-			 * injected at next entry.  No further work is required.
+			 * If a fault during instruction fetch was encountered,
+			 * it will have asserted that the appropriate exception
+			 * be injected at next entry.
+			 * No further work is required.
 			 */
 			return (0);
 		}
@@ -1721,6 +1733,56 @@ repeat:
 
 	vie_advance_pc(vie, &vcpu->nextrip);
 	return (0);
+}
+
+static int
+vm_handle_inst_emul(struct vm *vm, int vcpuid)
+{
+	struct vie *vie;
+	struct vcpu *vcpu;
+	struct vm_exit *vme;
+	uint64_t cs_base;
+	int error, fault, cs_d;
+
+	vcpu = &vm->vcpu[vcpuid];
+	vme = &vcpu->exitinfo;
+	vie = vcpu->vie_ctx;
+
+	vie_cs_info(vie, vm, vcpuid, &cs_base, &cs_d);
+
+	/* Fetch the faulting instruction */
+	ASSERT(vie_needs_fetch(vie));
+	error = vie_fetch_instruction(vie, vm, vcpuid, vme->rip + cs_base,
+	    &fault);
+	if (error != 0) {
+		return (error);
+	} else if (fault) {
+		/*
+		 * If a fault during instruction fetch was encounted, it will
+		 * have asserted that the appropriate exception be injected at
+		 * next entry.  No further work is required.
+		 */
+		return (0);
+	}
+
+	if (vie_decode_instruction(vie, vm, vcpuid, cs_d) != 0) {
+		/* Dump (unrecognized) instruction bytes in userspace */
+		vie_fallback_exitinfo(vie, vme);
+		return (-1);
+	}
+
+	error = vie_emulate_other(vie, vm, vcpuid);
+	if (error != 0) {
+		/*
+		 * Instruction emulation was unable to complete successfully, so
+		 * kick it out to userspace for handling.
+		 */
+		vie_fallback_exitinfo(vie, vme);
+	} else {
+		/* Update %rip now that instruction has been emulated */
+		vie_advance_pc(vie, &vcpu->nextrip);
+	}
+	return (error);
 }
 
 static int
@@ -2362,6 +2424,9 @@ restart:
 	case VM_EXITCODE_INOUT:
 		error = vm_handle_inout(vm, vcpuid, vme);
 		break;
+	case VM_EXITCODE_INST_EMUL:
+		error = vm_handle_inst_emul(vm, vcpuid);
+		break;
 	case VM_EXITCODE_MONITOR:
 	case VM_EXITCODE_MWAIT:
 	case VM_EXITCODE_VMINSN:
@@ -2868,7 +2933,15 @@ vm_inject_init(struct vm *vm, int vcpuid)
 	vcpu = &vm->vcpu[vcpuid];
 	vcpu_lock(vcpu);
 	vcpu->run_state |= VRS_PEND_INIT;
+	/*
+	 * As part of queuing the INIT request, clear any pending SIPI.  It
+	 * would not otherwise survive across the reset of the vCPU when it
+	 * undergoes the requested INIT.  We would not want it to linger when it
+	 * could be mistaken as a subsequent (after the INIT) SIPI request.
+	 */
+	vcpu->run_state &= ~VRS_PEND_SIPI;
 	vcpu_notify_event_locked(vcpu, VCPU_NOTIFY_EXIT);
+
 	vcpu_unlock(vcpu);
 	return (0);
 }
@@ -3721,3 +3794,20 @@ vm_ioport_unhook(struct vm *vm, void **cookie)
 
 	*cookie = NULL;
 }
+
+#ifndef __FreeBSD__
+int
+vm_arc_resv(struct vm *vm, uint64_t len)
+{
+	/* Since we already have the compat macros included, we use those */
+	size_t pages = (size_t)roundup2(len, PAGE_SIZE) >> PAGE_SHIFT;
+	int err = 0;
+
+	err = arc_virt_machine_reserve(pages);
+	if (err != 0)
+		return (err);
+
+	vm->arc_resv += pages;
+	return (0);
+}
+#endif /* __FreeBSD__ */

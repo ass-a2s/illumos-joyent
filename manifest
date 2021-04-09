@@ -2561,7 +2561,6 @@ f usr/bin/crontab 4555 root bin
 f usr/bin/crypt 0555 root bin
 f usr/bin/csh 0555 root bin
 f usr/bin/csplit 0555 root bin
-f usr/bin/ctags 0555 root bin
 f usr/bin/ctfdiff 0555 root bin
 f usr/bin/ctfdump 0555 root bin
 f usr/bin/ctrun 0555 root bin
@@ -10230,8 +10229,10 @@ s usr/lib/nss_user.so.1=../../lib/nss_user.so.1
 f usr/lib/passmgmt 0555 root sys
 f usr/lib/passwdutil.so.1 0755 root bin
 d usr/lib/pci 0755 root bin
+f usr/lib/pci/pcidb 0555 root bin
 f usr/lib/pci/pcidr 0555 root bin
 f usr/lib/pci/pcidr_plugin.so 0755 root bin
+f usr/lib/pci/pcieadm 0555 root bin
 f usr/lib/pci/pcieb 0555 root bin
 f usr/lib/pfexecd 0555 root bin
 d usr/lib/picl 0755 root sys
@@ -12005,7 +12006,6 @@ f usr/share/man/man1/crontab.1 0444 root bin
 f usr/share/man/man1/crypt.1 0444 root bin
 f usr/share/man/man1/csh.1 0444 root bin
 f usr/share/man/man1/csplit.1 0444 root bin
-f usr/share/man/man1/ctags.1 0444 root bin
 f usr/share/man/man1/ctfdiff.1 0444 root bin
 f usr/share/man/man1/ctfdump.1 0444 root bin
 f usr/share/man/man1/ctrun.1 0444 root bin
@@ -20761,6 +20761,7 @@ f usr/share/man/man9f/mac_link_update.9f 0444 root bin
 f usr/share/man/man9f/mac_lso_get.9f 0444 root bin
 f usr/share/man/man9f/mac_maxsdu_update.9f 0444 root bin
 f usr/share/man/man9f/mac_prop_info.9f 0444 root bin
+s usr/share/man/man9f/mac_prop_info_set_default_fec.9f=mac_prop_info.9f
 s usr/share/man/man9f/mac_prop_info_set_default_link_flowctrl.9f=mac_prop_info.9f
 s usr/share/man/man9f/mac_prop_info_set_default_str.9f=mac_prop_info.9f
 s usr/share/man/man9f/mac_prop_info_set_default_uint32.9f=mac_prop_info.9f

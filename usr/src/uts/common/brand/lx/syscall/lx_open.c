@@ -23,7 +23,7 @@
  * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  * Copyright 2018 Joyent, Inc.
- * Copyright 2020 OmniOS Community Edition (OmniOSce) Association.
+ * Copyright 2021 OmniOS Community Edition (OmniOSce) Association.
  */
 
 #include <sys/systm.h>
@@ -54,17 +54,17 @@ ltos_open_flags(int input)
 {
 	int flags;
 
-	if (input & LX_O_PATH) {
+	if (input & LX_O_PATH)
 		input &= (LX_O_DIRECTORY | LX_O_NOFOLLOW | LX_O_CLOEXEC);
-	}
 
-	/* This depends on the Linux ACCMODE flags being the same as SunOS. */
+	/*
+	 * The illumos O_ACCMODE also includes O_SEARCH|O_EXEC
+	 * so this has the effect of stripping those here.
+	 */
 	flags = (input & LX_O_ACCMODE);
 
-	if (input & LX_O_CREAT) {
+	if (input & LX_O_CREAT)
 		flags |= O_CREAT;
-	}
-
 	if (input & LX_O_EXCL)
 		flags |= O_EXCL;
 	if (input & LX_O_NOCTTY)
@@ -83,6 +83,8 @@ ltos_open_flags(int input)
 		flags |= O_NOFOLLOW;
 	if (input & LX_O_CLOEXEC)
 		flags |= O_CLOEXEC;
+	if (input & LX_O_DIRECTORY)
+		flags |= O_DIRECTORY;
 
 	/*
 	 * Linux uses the LX_O_DIRECT flag to do raw, synchronous I/O to the
@@ -169,14 +171,9 @@ lx_openat(int atfd, char *path, int fmode, int cmode)
 
 	flags = ltos_open_flags(fmode);
 
-	/*
-	 * We use the FSEARCH flag to make sure this is a directory. We have to
-	 * explicitly add 1 to emulate the FREAD/FWRITE mapping of the OPENMODE
-	 * macro since it won't get set via OPENMODE when FSEARCH is used.
-	 */
-	if (fmode & LX_O_DIRECTORY) {
-		flags |= FSEARCH;
-		flags++;
+	if ((fmode & (LX_O_NOFOLLOW|LX_O_PATH|__FLXPATH)) ==
+	    (LX_O_NOFOLLOW|LX_O_PATH|__FLXPATH)) {
+		flags |= __FLXPATH;
 	}
 
 	if (flags & O_CREAT)
@@ -185,62 +182,8 @@ lx_openat(int atfd, char *path, int fmode, int cmode)
 	ttolwp(curthread)->lwp_errno = 0;
 	fd = openat(atfd, path, flags, mode);
 	if (ttolwp(curthread)->lwp_errno != 0) {
-		if ((fmode & LX_O_DIRECTORY) &&
-		    ttolwp(curthread)->lwp_errno != ENOTDIR) {
-			/*
-			 * We got an error trying to open a file as a directory.
-			 * We need to determine if we should return the original
-			 * error or ENOTDIR.
-			 */
-			vnode_t *startvp;
-			vnode_t *vp;
-			int oerror, error = 0;
-
-			oerror = ttolwp(curthread)->lwp_errno;
-
-			if (atfd == AT_FDCWD) {
-				/* regular open */
-				startvp = NULL;
-			} else {
-				char startchar;
-
-				if (copyin(path, &startchar, sizeof (char)))
-					return (set_errno(oerror));
-
-				/* if startchar is / then startfd is ignored */
-				if (startchar == '/') {
-					startvp = NULL;
-				} else {
-					file_t *startfp;
-
-					if ((startfp = getf(atfd)) == NULL)
-						return (set_errno(oerror));
-					startvp = startfp->f_vnode;
-					VN_HOLD(startvp);
-					releasef(atfd);
-				}
-			}
-
-			if (lookupnameat(path, UIO_USERSPACE,
-			    (fmode & LX_O_NOFOLLOW) ?  NO_FOLLOW : FOLLOW,
-			    NULLVPP, &vp, startvp) != 0) {
-				if (startvp != NULL)
-					VN_RELE(startvp);
-				return (set_errno(oerror));
-			}
-
-			if (startvp != NULL)
-				VN_RELE(startvp);
-
-			if (vp->v_type != VDIR)
-				error = ENOTDIR;
-
-			VN_RELE(vp);
-			if (error != 0)
-				return (set_errno(ENOTDIR));
-
-			(void) set_errno(oerror);
-		} else if ((fmode & LX_O_NOFOLLOW) && (fmode & LX_O_PATH) &&
+		if ((fmode & (LX_O_NOFOLLOW|LX_O_PATH|__FLXPATH)) ==
+		    (LX_O_NOFOLLOW|LX_O_PATH) &&
 		    ttolwp(curthread)->lwp_errno == ELOOP) {
 			/*
 			 * On Linux, if O_NOFOLLOW and O_PATH are set together
@@ -252,17 +195,14 @@ lx_openat(int atfd, char *path, int fmode, int cmode)
 			 * fstatat(2), linkat(2), and readlinkat(2) alongside
 			 * an empty pathname.
 			 *
-			 * We do not have a way to return such a file
-			 * descriptor in illumos so open it without NO_FOLLOW
-			 * and allow the postprocess to emulate O_PATH by
-			 * removing the read and write flags.
-			 * This is enough to keep recent systemd happy
-			 * although any attempt to use the fd for the above
-			 * listed calls without a pathname will fail or modify
-			 * the symlink target.
+			 * illumos has a private interface flag that causes
+			 * openat() to return a file descriptor attached to
+			 * the symlink's vnode. This, in conjunction with the
+			 * other adjustments made in lx_open_postprocess()
+			 * for O_PATH, is enough to satisfy systemd and
+			 * other parts of Linux.
 			 */
-			return (lx_openat(atfd, path, fmode & ~LX_O_NOFOLLOW,
-			    cmode));
+			return (lx_openat(atfd, path, fmode|__FLXPATH, cmode));
 		}
 
 		if (ttolwp(curthread)->lwp_errno == EINTR)

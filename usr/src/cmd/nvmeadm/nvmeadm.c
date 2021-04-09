@@ -13,7 +13,7 @@
  * Copyright 2016 Nexenta Systems, Inc.
  * Copyright 2017 Joyent, Inc.
  * Copyright 2019 Western Digital Corporation.
- * Copyright 2020 Oxide Computer Company
+ * Copyright 2021 Oxide Computer Company
  */
 
 /*
@@ -49,27 +49,6 @@
 
 #include "nvmeadm.h"
 
-typedef struct nvme_process_arg nvme_process_arg_t;
-typedef struct nvme_feature nvme_feature_t;
-typedef struct nvmeadm_cmd nvmeadm_cmd_t;
-
-struct nvme_process_arg {
-	int npa_argc;
-	char **npa_argv;
-	char *npa_name;
-	char *npa_nsid;
-	int npa_found;
-	boolean_t npa_isns;
-	const nvmeadm_cmd_t *npa_cmd;
-	di_node_t npa_node;
-	di_minor_t npa_minor;
-	char *npa_path;
-	char *npa_dsk;
-	nvme_identify_ctrl_t *npa_idctl;
-	nvme_identify_nsid_t *npa_idns;
-	nvme_version_t *npa_version;
-};
-
 struct nvme_feature {
 	char *f_name;
 	char *f_short;
@@ -77,7 +56,8 @@ struct nvme_feature {
 	size_t f_bufsize;
 	uint_t f_getflags;
 	int (*f_get)(int, const nvme_feature_t *, const nvme_process_arg_t *);
-	void (*f_print)(uint64_t, void *, size_t, nvme_identify_ctrl_t *);
+	void (*f_print)(uint64_t, void *, size_t, nvme_identify_ctrl_t *,
+	    nvme_version_t *);
 };
 
 #define	NVMEADM_CTRL	1
@@ -86,11 +66,12 @@ struct nvme_feature {
 
 struct nvmeadm_cmd {
 	char *c_name;
-	char *c_desc;
-	char *c_flagdesc;
+	const char *c_desc;
+	const char *c_flagdesc;
 	int (*c_func)(int, const nvme_process_arg_t *);
 	void (*c_usage)(const char *);
 	boolean_t c_multi;
+	void (*c_optparse)(nvme_process_arg_t *);
 };
 
 
@@ -120,6 +101,8 @@ static int do_firmware_load(int, const nvme_process_arg_t *);
 static int do_firmware_commit(int, const nvme_process_arg_t *);
 static int do_firmware_activate(int, const nvme_process_arg_t *);
 
+static void optparse_list(nvme_process_arg_t *);
+
 static void usage_list(const char *);
 static void usage_identify(const char *);
 static void usage_get_logpage(const char *);
@@ -139,8 +122,9 @@ static const nvmeadm_cmd_t nvmeadm_cmds[] = {
 	{
 		"list",
 		"list controllers and namespaces",
-		NULL,
-		do_list, usage_list, B_TRUE
+		"  -p\t\tprint parsable output\n"
+		    "  -o field\tselect a field for parsable output\n",
+		do_list, usage_list, B_TRUE, optparse_list
 	},
 	{
 		"identify",
@@ -256,12 +240,12 @@ int
 main(int argc, char **argv)
 {
 	int c;
-	extern int optind;
 	const nvmeadm_cmd_t *cmd;
 	di_node_t node;
 	nvme_process_arg_t npa = { 0 };
 	int help = 0;
 	char *tmp, *lasts = NULL;
+	char *ctrl = NULL;
 
 	while ((c = getopt(argc, argv, "dhv")) != -1) {
 		switch (c) {
@@ -308,25 +292,42 @@ main(int argc, char **argv)
 	optind++;
 
 	/*
-	 * All commands but "list" require a ctl/ns argument.
+	 * Store the remaining arguments for use by the command. Give the
+	 * command a chance to process the options across the board before going
+	 * into each controller.
 	 */
-	if ((optind == argc || (strncmp(argv[optind], "nvme", 4) != 0)) &&
+	npa.npa_argc = argc - optind;
+	npa.npa_argv = &argv[optind];
+
+	if (cmd->c_optparse != NULL) {
+		cmd->c_optparse(&npa);
+	}
+
+	/*
+	 * All commands but "list" require a ctl/ns argument. However, this
+	 * should not be passed through to the command in its subsequent
+	 * arguments.
+	 */
+	if ((npa.npa_argc == 0 || (strncmp(npa.npa_argv[0], "nvme", 4) != 0)) &&
 	    cmd->c_func != do_list) {
 		warnx("missing controller/namespace name");
 		usage(cmd);
 		exit(-1);
 	}
 
-
-	/* Store the remaining arguments for use by the command. */
-	npa.npa_argc = argc - optind - 1;
-	npa.npa_argv = &argv[optind + 1];
+	if (npa.npa_argc > 0) {
+		ctrl = npa.npa_argv[0];
+		npa.npa_argv++;
+		npa.npa_argc--;
+	} else {
+		ctrl = NULL;
+	}
 
 	/*
 	 * Make sure we're not running commands on multiple controllers that
 	 * aren't allowed to do that.
 	 */
-	if (argv[optind] != NULL && strchr(argv[optind], ',') != NULL &&
+	if (ctrl != NULL && strchr(ctrl, ',') != NULL &&
 	    cmd->c_multi == B_FALSE) {
 		warnx("%s not allowed on multiple controllers",
 		    cmd->c_name);
@@ -337,7 +338,7 @@ main(int argc, char **argv)
 	/*
 	 * Get controller/namespace arguments and run command.
 	 */
-	npa.npa_name = strtok_r(argv[optind], ",", &lasts);
+	npa.npa_name = strtok_r(ctrl, ",", &lasts);
 	do {
 		if (npa.npa_name != NULL) {
 			tmp = strchr(npa.npa_name, '/');
@@ -372,6 +373,15 @@ main(int argc, char **argv)
 }
 
 static void
+nvme_oferr(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	verrx(-1, fmt, ap);
+}
+
+static void
 usage(const nvmeadm_cmd_t *cmd)
 {
 	(void) fprintf(stderr, "usage:\n");
@@ -393,9 +403,9 @@ usage(const nvmeadm_cmd_t *cmd)
 			    cmd->c_name, cmd->c_desc);
 	}
 	(void) fprintf(stderr, "\nflags:\n"
-	    "  -h  print usage information\n"
-	    "  -d  print information useful for debugging %s\n"
-	    "  -v  print verbose information\n", getprogname());
+	    "  -h\t\tprint usage information\n"
+	    "  -d\t\tprint information useful for debugging %s\n"
+	    "  -v\t\tprint verbose information\n", getprogname());
 	if (cmd != NULL && cmd->c_flagdesc != NULL)
 		(void) fprintf(stderr, "%s\n", cmd->c_flagdesc);
 }
@@ -553,11 +563,61 @@ nvme_walk(nvme_process_arg_t *npa, di_node_t node)
 static void
 usage_list(const char *c_name)
 {
-	(void) fprintf(stderr, "%s [<ctl>[/<ns>][,...]\n\n"
+	(void) fprintf(stderr, "%s "
+	    "[-p -o field[,...]] [<ctl>[/<ns>][,...]\n\n"
 	    "  List NVMe controllers and their namespaces. If no "
 	    "controllers and/or name-\n  spaces are specified, all "
 	    "controllers and namespaces in the system will be\n  "
 	    "listed.\n", c_name);
+}
+
+static void
+optparse_list(nvme_process_arg_t *npa)
+{
+	int c;
+	uint_t oflags = 0;
+	boolean_t parse = B_FALSE;
+	const char *fields = NULL;
+
+	optind = 0;
+	while ((c = getopt(npa->npa_argc, npa->npa_argv, ":o:p")) != -1) {
+		switch (c) {
+		case 'o':
+			fields = optarg;
+			break;
+		case 'p':
+			parse = B_TRUE;
+			oflags |= OFMT_PARSABLE;
+			break;
+		case '?':
+			errx(-1, "unknown list option: -%c", optopt);
+			break;
+		case ':':
+			errx(-1, "option -%c requires an argument", optopt);
+		default:
+			break;
+		}
+	}
+
+	if (fields != NULL && !parse) {
+		errx(-1, "-o can only be used when in parsable mode (-p)");
+	}
+
+	if (parse && fields == NULL) {
+		errx(-1, "parsable mode (-p) requires one to specify output "
+		    "fields with -o");
+	}
+
+	if (parse) {
+		ofmt_status_t oferr;
+
+		oferr = ofmt_open(fields, nvme_list_ofmt, oflags, 0,
+		    &npa->npa_ofmt);
+		ofmt_check(oferr, B_TRUE, npa->npa_ofmt, nvme_oferr, warnx);
+	}
+
+	npa->npa_argc -= optind;
+	npa->npa_argv += optind;
 }
 
 static int
@@ -574,10 +634,14 @@ do_list_nsid(int fd, const nvme_process_arg_t *npa)
 	if ((bshift < 9 || npa->npa_idns->id_nsize == 0) && verbose == 0)
 		return (0);
 
-	(void) printf("  %s/%s (%s): ", npa->npa_name,
-	    di_minor_name(npa->npa_minor),
-	    npa->npa_dsk != NULL ? npa->npa_dsk : "unattached");
-	nvme_print_nsid_summary(npa->npa_idns);
+	if (npa->npa_ofmt == NULL) {
+		(void) printf("  %s/%s (%s): ", npa->npa_name,
+		    di_minor_name(npa->npa_minor),
+		    npa->npa_dsk != NULL ? npa->npa_dsk : "unattached");
+		nvme_print_nsid_summary(npa->npa_idns);
+	} else {
+		ofmt_print(npa->npa_ofmt, (void *)npa);
+	}
 
 	return (0);
 }
@@ -595,8 +659,10 @@ do_list(int fd, const nvme_process_arg_t *npa)
 	    di_instance(npa->npa_node)) < 0)
 		err(-1, "do_list()");
 
-	(void) printf("%s: ", name);
-	nvme_print_ctrl_summary(npa->npa_idctl, npa->npa_version);
+	if (npa->npa_ofmt == NULL) {
+		(void) printf("%s: ", name);
+		nvme_print_ctrl_summary(npa->npa_idctl, npa->npa_version);
+	}
 
 	ns_npa.npa_name = name;
 	ns_npa.npa_isns = B_TRUE;
@@ -604,6 +670,8 @@ do_list(int fd, const nvme_process_arg_t *npa)
 	cmd = *(npa->npa_cmd);
 	cmd.c_func = do_list_nsid;
 	ns_npa.npa_cmd = &cmd;
+	ns_npa.npa_ofmt = npa->npa_ofmt;
+	ns_npa.npa_idctl = npa->npa_idctl;
 
 	nvme_walk(&ns_npa, npa->npa_node);
 
@@ -672,7 +740,7 @@ do_get_logpage_error(int fd, const nvme_process_arg_t *npa)
 	nlog = bufsize / sizeof (nvme_error_log_entry_t);
 
 	(void) printf("%s: ", npa->npa_name);
-	nvme_print_error_log(nlog, elog);
+	nvme_print_error_log(nlog, elog, npa->npa_version);
 
 	free(elog);
 
@@ -791,7 +859,7 @@ do_get_feat_common(int fd, const nvme_feature_t *feat,
 		return (EINVAL);
 
 	nvme_print(2, feat->f_name, -1, NULL);
-	feat->f_print(res, buf, bufsize, npa->npa_idctl);
+	feat->f_print(res, buf, bufsize, npa->npa_idctl, npa->npa_version);
 	free(buf);
 
 	return (0);
@@ -816,7 +884,7 @@ do_get_feat_temp_thresh_one(int fd, const nvme_feature_t *feat,
 		return (EINVAL);
 	}
 
-	feat->f_print(res, (void *)label, 0, npa->npa_idctl);
+	feat->f_print(res, (void *)label, 0, npa->npa_idctl, npa->npa_version);
 	free(buf);
 	return (0);
 }
@@ -844,7 +912,7 @@ do_get_feat_temp_thresh(int fd, const nvme_feature_t *feat,
 		return (ret);
 	}
 
-	if (!NVME_VERSION_ATLEAST(npa->npa_version, 1, 2)) {
+	if (!nvme_version_check(npa->npa_version, 1, 2)) {
 		return (0);
 	}
 
@@ -956,7 +1024,7 @@ do_get_feat_intr_vect(int fd, const nvme_feature_t *feat,
 		    == B_FALSE)
 			return (EINVAL);
 
-		feat->f_print(res, NULL, 0, npa->npa_idctl);
+		feat->f_print(res, NULL, 0, npa->npa_idctl, npa->npa_version);
 	}
 
 	return (0);
@@ -1282,7 +1350,7 @@ do_firmware_load(int fd, const nvme_process_arg_t *npa)
 		size += len;
 	} while (len == sizeof (buf));
 
-	close(fw_fd);
+	(void) close(fw_fd);
 
 	if (verbose)
 		(void) printf("%zu bytes downloaded.\n", size);
@@ -1374,4 +1442,26 @@ do_firmware_activate(int fd, const nvme_process_arg_t *npa)
 		    nvme_str_error(sct, sc));
 
 	return (0);
+}
+
+/*
+ * While the NVME_VERSION_ATLEAST macro exists, specifying a version of 1.0
+ * causes GCC to helpfully flag the -Wtype-limits warning because a uint_t is
+ * always >= 0. In many cases it's useful to always indicate what version
+ * something was added in to simplify code (e.g. nvmeadm_print_bit) and we'd
+ * rather just say it's version 1.0 rather than making folks realize that a
+ * hardcoded true is equivalent. Therefore we have this function which can't
+ * trigger this warning today (and adds a minor amount of type safety). If GCC
+ * or clang get smart enough to see through this, then we'll have to just
+ * disable the warning for the single minor comparison (and reformat this a bit
+ * to minimize the impact).
+ */
+boolean_t
+nvme_version_check(nvme_version_t *vers, uint_t major, uint_t minor)
+{
+	if (vers->v_major > major) {
+		return (B_TRUE);
+	}
+
+	return (vers->v_major == major && vers->v_minor >= minor);
 }

@@ -303,10 +303,12 @@ def str_prefix_trunc(s, prefix) :
 def fnFormat(fn) :
 	global baseWsRoot, ptchWsRoot
 
-	if len(os.path.commonprefix([fn, baseWsRoot])) == len(baseWsRoot):
+	if (baseWsRoot and
+	    len(os.path.commonprefix([fn, baseWsRoot])) == len(baseWsRoot)):
 		return fn[len(baseWsRoot) + 1:]
 
-	if len(os.path.commonprefix([fn, ptchWsRoot])) == len(ptchWsRoot):
+	if (ptchWsRoot and
+	    len(os.path.commonprefix([fn, ptchWsRoot])) == len(ptchWsRoot)):
 		return fn[len(ptchWsRoot) + 1:]
 
 	# Fall back to looking for the expected root_<arch>[-nd] string
@@ -327,7 +329,7 @@ def fnFormat(fn) :
 #      root/usr/bin => root
 #
 def protoroot(fn):
-	root = fn
+	root = fn.rstrip('/')
 	while len(root) > 1:
 		if os.path.isfile(os.path.join(root, genunix)):
 			return root

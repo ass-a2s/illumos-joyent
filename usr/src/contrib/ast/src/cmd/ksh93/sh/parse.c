@@ -290,7 +290,7 @@ static Shnode_t *getanode(Lex_t *lp, struct argnod *ap)
 	else
 	{
 		if(sh_isoption(SH_NOEXEC) && (ap->argflag&ARG_MAC) && paramsub(ap->argval))
-			errormsg(SH_DICT,ERROR_warn(0),e_lexwarnvar,lp->sh->inlineno);
+			errormsg(SH_DICT,ERROR_warn(0),e_lexwarnvar,lp->sh->inlineno, ap->argval);
 		t->ar.arcomp = 0;
 	}
 	return(t);
@@ -743,7 +743,7 @@ static Shnode_t *funct(Lex_t *lexp)
 	register Shnode_t *t;
 	register int flag;
 	struct slnod *volatile slp=0;
-	Stak_t *savstak;
+	Stak_t *savstak = NULL;
 	Sfoff_t	first, last;
 	struct functnod *volatile fp;
 	Sfio_t *iop;

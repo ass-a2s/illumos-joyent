@@ -601,6 +601,7 @@ typedef struct smb_oplock_grant {
 	uint32_t		og_state;	/* latest sent to client */
 	uint32_t		og_breaking;	/* BREAK_TO... flags */
 	uint16_t		og_dialect;	/* how to send breaks */
+	boolean_t		og_closing;
 	/* File-system level state */
 	uint8_t			onlist_II;
 	uint8_t			onlist_R;
@@ -1169,6 +1170,7 @@ typedef struct smb_tree {
 	time_t			t_connect_time;
 	volatile uint32_t	t_open_files;
 	smb_cfg_val_t		t_encrypt; /* Share.EncryptData */
+	timestruc_t		t_create_time;
 } smb_tree_t;
 
 #define	SMB_TREE_VFS(tree)	((tree)->t_snode->vp->v_vfsp)

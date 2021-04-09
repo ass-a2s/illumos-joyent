@@ -12,7 +12,7 @@
 
 /*
  * Copyright 2015 Pluribus Networks Inc.
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  * Copyright 2020 OmniOS Community Edition (OmniOSce) Association.
  * Copyright 2020 Oxide Computer Company
  */
@@ -471,6 +471,7 @@ vmmdev_do_ioctl(vmm_softc_t *sc, int cmd, intptr_t arg, int md,
 	case VM_MMAP_MEMSEG:
 	case VM_WRLOCK_CYCLE:
 	case VM_PMTMR_LOCATE:
+	case VM_ARC_RESV:
 		vmm_write_lock(sc);
 		lock_type = LOCK_WRITE_HOLD;
 		break;
@@ -1396,6 +1397,9 @@ vmmdev_do_ioctl(vmm_softc_t *sc, int cmd, intptr_t arg, int md,
 		 */
 		break;
 	}
+	case VM_ARC_RESV:
+		error = vm_arc_resv(sc->vmm_vm, (uint64_t)arg);
+		break;
 #endif
 	default:
 		error = ENOTTY;
@@ -1869,12 +1873,12 @@ vmm_do_vm_destroy_locked(vmm_softc_t *sc, boolean_t clean_zsd,
 
 	*hma_release = B_FALSE;
 
-	if (clean_zsd) {
-		vmm_zsd_rem_vm(sc);
-	}
-
 	if (vmm_drv_purge(sc) != 0) {
 		return (EINTR);
+	}
+
+	if (clean_zsd) {
+		vmm_zsd_rem_vm(sc);
 	}
 
 	/* Clean up devmem entries */
